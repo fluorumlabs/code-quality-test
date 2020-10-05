@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 public final class LambdaInspections extends Suite {
 
     @Warning("Narrow-scoped object captured in effectively static or singleton lambda")
-    @Scopes({"static", "singleton"})
+    @Scopes(exclude = {"static", "singleton", "instance"})
     public Predicate<Reference> narrowScopeCapturedInStaticLambda() {
         return and(
                 field(
@@ -22,7 +22,7 @@ public final class LambdaInspections extends Suite {
                         type(isNot(Classes.BOXED_PRIMITIVE_OR_STRING))
                 ),
                 targetType(isNot("org.springframework.beans.factory.config.Scope")),
-                isSeenExcept("static", "singleton", "instance")
+                backreference(isNotInContext("static", "singleton", "instance"))
         );
     }
 
@@ -35,7 +35,7 @@ public final class LambdaInspections extends Suite {
                         type(isNot(Classes.BOXED_PRIMITIVE_OR_STRING))
                 ),
                 targetType(isNot("org.springframework.beans.factory.config.Scope")),
-                isSeenExcept("static", "singleton", "session", "instance")
+                backreference(isNotInContext("static", "singleton", "session", "instance"))
         );
     }
 }

@@ -6,13 +6,10 @@ import org.vaadin.qa.cqt.suites.Classes;
 
 import javax.annotation.Nullable;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,20 +17,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 /**
  * Created by Artem Godin on 9/23/2020.
  */
 public class Scanner {
-    private static final long DISPLAY_INTERVAL = TimeUnit.MILLISECONDS.toNanos(200);
+    private static final long DISPLAY_INTERVAL = TimeUnit.MILLISECONDS.toNanos(100);
 
     private final Queue<Object> scannerQueue = new ArrayDeque<>();
     private final Map<Object, ObjectData> visitedObjects = new IdentityHashMap<>();
-    private final Map<String, Object> objectHashes = new HashMap<>();
     private final Map<Object, List<Reference>> backreferences = new IdentityHashMap<>();
     private final Predicate<Class<?>> filter;
     private final List<Inspection> inspections = new ArrayList<>();
@@ -45,32 +37,12 @@ public class Scanner {
         this.filter = filter;
     }
 
-    public Scanner(String... packages) {
-        this.filter = Stream.of(packages)
-                .<Predicate<Class<?>>>map(p -> (clazz -> clazz.getName().startsWith(p)))
-                .reduce(Predicate::or)
-                .orElse(x -> true);
-    }
-
-    public void setOutput(PrintWriter output) {
-        this.output = output;
-    }
-
-    public static String computeHash(Object x) {
-        Class<?> clazz = x.getClass();
-        if (shouldIgnore(clazz)) {
-            return "";
-        }
-        return clazz.getName()+"-"+System.identityHashCode(x);
-    }
-
-    private static Iterator<Class<?>> list(ClassLoader classLoader) throws NoSuchFieldException, IllegalAccessException {
+    private static List<Class<?>> list(ClassLoader classLoader) {
         Class<?> classLoaderClass = classLoader.getClass();
         while (classLoaderClass != ClassLoader.class) {
             classLoaderClass = classLoaderClass.getSuperclass();
         }
-        List<Class<?>> classes = Unreflection.readField(classLoader, ClassLoader.class, "classes", Vector.class);
-        return classes.iterator();
+        return Unreflection.readField(classLoader, ClassLoader.class, "classes", Vector.class);
     }
 
     private static boolean shouldIgnore(Class<?> clazz) {
@@ -89,6 +61,7 @@ public class Scanner {
                 || clazz.equals(Float.class)
                 || clazz.equals(Double.class)
                 || clazz.getName().contains("CGLIB$$")
+                || clazz.getName().contains("$Proxy")
                 || (clazz.getPackage() != null && clazz.getPackage().equals(Classes.class.getPackage()))
                 || (clazz.getPackage() != null && clazz.getPackage().equals(Scanner.class.getPackage()))
                 || (clazz.getPackage() != null && clazz.getPackage().equals(Field.class.getPackage()));
@@ -104,33 +77,26 @@ public class Scanner {
         return EngineInstance.get().unwrap(proxy);
     }
 
-    public static <T> T invokeDeclaredMethod(Object instance, String method) {
+    @SuppressWarnings("unchecked")
+    @Nullable
+    private static <T> T getThreadLocalEntries(Object instance, ThreadLocal<?> threadLocal) {
         try {
-            Method declaredMethod = Unreflection.getDeclaredMethod(instance.getClass(), method);
+            Method declaredMethod = Unreflection.getDeclaredMethod(instance.getClass(), "getEntry", ThreadLocal.class);
             declaredMethod.setAccessible(true);
-            return (T) declaredMethod.invoke(instance);
+            return (T) declaredMethod.invoke(instance, threadLocal);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             return null;
         }
     }
 
-    public static <T, A> T invokeDeclaredMethod(Object instance, String method, Class<A> arg1Type, A arg1) {
-        try {
-            Method declaredMethod = Unreflection.getDeclaredMethod(instance.getClass(),method, arg1Type);
-            declaredMethod.setAccessible(true);
-            return (T) declaredMethod.invoke(instance, arg1);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            return null;
-        }
-    }
-
-    public static <T> T readDeclaredField(Object instance, String field) {
+    @SuppressWarnings("unchecked")
+    private static <T> T readDeclaredField(Object instance, String field) {
         Class<?> visitingClass = instance.getClass();
 
         while (visitingClass != null && !Object.class.equals(visitingClass)) {
             Field declaredField = null;
             try {
-                declaredField = Unreflection.getDeclaredField(visitingClass,field);
+                declaredField = Unreflection.getDeclaredField(visitingClass, field);
             } catch (NoSuchFieldException e) {
                 // ignore
             }
@@ -139,12 +105,16 @@ public class Scanner {
                 try {
                     return (T) declaredField.get(instance);
                 } catch (IllegalAccessException e) {
-                    return null;
+                    throw new IllegalStateException("Unable to read ThreadGroup." + field, e);
                 }
             }
             visitingClass = visitingClass.getSuperclass();
         }
-        return null;
+        throw new IllegalStateException("Cannot find ThreadGroup." + field);
+    }
+
+    public void setOutput(PrintWriter output) {
+        this.output = output;
     }
 
     public void addSuite(Supplier<Suite> suiteSupplier) {
@@ -159,7 +129,7 @@ public class Scanner {
             references.stream()
                     .filter(inspection.getPredicate())
                     .forEach(result::add);
-            if (!result.isEmpty()) {
+            if (result.hasReferences()) {
                 results.add(result);
             }
         }
@@ -191,92 +161,6 @@ public class Scanner {
         return result;
     }
 
-    public void dumpObject(String hash) {
-        Object object = objectHashes.get(hash);
-        if (object == null || !visitedObjects.containsKey(object)) {
-            output.println("No printable object instance found with specified id");
-            return;
-        }
-        Reference reference = Reference.from(object, this);
-        List<Reference> values = listUnfilteredReferences(object);
-        List<Reference> staticValues = listUnfilteredReferences(object.getClass());
-
-        String contextPath = reference.formatPathToContext();
-        output.append(String.format("Class:         %s\n", escapeHtml4(reference.formatOwnerClass())));
-        output.append(String.format("Context:       %s\n", escapeHtml4(reference.formatScope())));
-        if (!contextPath.isEmpty()) {
-            output.append(String.format("Context path:  %s\n", escapeHtml4(contextPath)));
-        }
-        if (reference.getTarget() != null) {
-            output.append(String.format("Value:         %s\n", reference.formatValue()));
-        }
-        List<String> backrefs = reference.formatBackreferences().stream()
-                .sorted()
-                .distinct()
-                .collect(Collectors.toList());
-
-        int counter = 0;
-        for (String backref : backrefs) {
-            if (counter == 0) {
-                output.append(String.format("Referenced by: %s\n", backref));
-            } else {
-                output.append(String.format("               %s\n", backref));
-            }
-            counter++;
-            if (counter> maxReferences) {
-                output.append(String.format("               ... %d more\n", backrefs.size()-counter));
-                break;
-            }
-        }
-        output.println();
-        List<Reference> orderedStaticValues = staticValues.stream()
-                .sorted(Comparator.comparing(Reference::formatPartial))
-                .collect(Collectors.toList());
-
-        int maxLength = Stream.concat(values.stream(), staticValues.stream()).map(Reference::formatField).map(String::length).max(Integer::compareTo).orElse(0);
-
-        for (Reference value : orderedStaticValues) {
-            String fieldName = value.formatField();
-            if (value.getReferenceType()!=ReferenceType.ACTUAL_VALUE) {
-                fieldName = new String(new char[fieldName.length() - 2 * value.getReferenceType().toString().length()]).replace("\0", " ") + value.getReferenceType();
-            }
-            String padding = new String(new char[maxLength - fieldName.length()]).replace("\0", " ");
-            output.format("%s%s = %s\n", escapeHtml4(fieldName), padding, value.formatValue());
-        }
-
-        if (!orderedStaticValues.isEmpty()) {
-            output.println();
-        }
-
-        List<Reference> orderedValues = values.stream()
-                .sorted(Comparator.comparing(Reference::formatPartial))
-                .collect(Collectors.toList());
-
-        for (Reference value : orderedValues) {
-            String fieldName = value.formatField();
-            if (value.getReferenceType()!=ReferenceType.ACTUAL_VALUE) {
-                fieldName = new String(new char[fieldName.length() - 2 * value.getReferenceType().toString().length()]).replace("\0", " ") + value.getReferenceType();
-            }
-            String padding = new String(new char[maxLength-fieldName.length()]).replace("\0", " ");
-            output.format("%s%s = %s\n", escapeHtml4(fieldName), padding, value.formatValue());
-        }
-    }
-
-    public List<Reference> listUnfilteredReferences(Object object) {
-        if (object == null) {
-            return Collections.emptyList();
-        }
-        List<Reference> result = new ArrayList<>();
-
-        ObjectData data = visitedObjects.get(object);
-
-        for (ObjectValue value : data.getValues()) {
-            result.add(Reference.from(object, value, this));
-        }
-
-        return result;
-    }
-
     @Nullable
     public ObjectData getData(Object object) {
         return visitedObjects.get(object);
@@ -288,36 +172,20 @@ public class Scanner {
 
     public void clear() {
         visitedObjects.clear();
-        objectHashes.clear();
         backreferences.clear();
     }
 
     public void visit(Object someObject) {
-        output.println("Visiting " + StringEscapeUtils.escapeHtml4(Objects.toString(someObject)));
+        output.println("visiting: " + StringEscapeUtils.escapeHtml4(Objects.toString(someObject)));
         scannerQueue.add(someObject);
-        processQueue();
-    }
-
-    public void visit(Object... someObjects) {
-        for (Object someObject : someObjects) {
-            output.println("Visiting " + StringEscapeUtils.escapeHtml4(Objects.toString(someObject)));
-            scannerQueue.add(someObject);
-        }
         processQueue();
     }
 
     public void visitClassLoaders() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         while (classLoader != null) {
-            output.println("Visiting " + StringEscapeUtils.escapeHtml4(Objects.toString(classLoader)));
-            try {
-                Iterator<Class<?>> iter = list(classLoader);
-                while (iter.hasNext()) {
-                    scannerQueue.add(iter.next());
-                }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                // ignore
-            }
+            output.println("class loader: " + StringEscapeUtils.escapeHtml4(Objects.toString(classLoader)));
+            list(classLoader).forEach(scannerQueue::add);
             classLoader = classLoader.getParent();
         }
         output.println();
@@ -325,7 +193,7 @@ public class Scanner {
     }
 
     private void processQueue() {
-        output.println("Scanning objects...");
+        output.println("<div class='container'>");
         long stamp = System.nanoTime() - DISPLAY_INTERVAL;
         int before = visitedObjects.size();
         Object objectToVisit = scannerQueue.poll();
@@ -333,7 +201,7 @@ public class Scanner {
             long now = System.nanoTime();
             long diff = now - stamp;
             if (diff >= DISPLAY_INTERVAL) {
-                output.println("Queued: " + scannerQueue.size() + "\tVisited: " + (visitedObjects.size() - before));
+                output.println("<div class='frame'>instance: " + (visitedObjects.size() - before) + "</div>");
                 stamp = now;
             }
             if (objectToVisit instanceof Class) {
@@ -346,14 +214,11 @@ public class Scanner {
             }
             objectToVisit = scannerQueue.poll();
         }
-        int after = visitedObjects.size();
-        output.println("Added " + (after - before) + " objects");
-        output.println();
         propagateScopes();
+        output.println("</div>");
     }
 
     private void propagateScopes() {
-        output.println("Propagating scopes...");
         Queue<Object> propagationQueue = new ArrayDeque<>();
         Map<String, AtomicInteger> scopeStats = new LinkedHashMap<>();
         visitedObjects.entrySet().stream()
@@ -368,54 +233,54 @@ public class Scanner {
             long now = System.nanoTime();
             long diff = now - stamp;
             if (diff >= DISPLAY_INTERVAL) {
+                output.print("<div class='frame'>");
                 for (Map.Entry<String, AtomicInteger> stat : scopeStats.entrySet()) {
-                    output.print(stat.getKey() + ": " + stat.getValue().get() + "\t");
+                    output.println(stat.getKey() + ": " + stat.getValue().get());
                 }
-                output.println("Queued: " + propagationQueue.size());
+                output.println("</div>");
                 stamp = now;
             }
             ObjectData objectData = visitedObjects.get(objectToVisit);
-            for (ObjectValue objectValue : objectData.getValues()) {
-                if (objectValue != null) { // Don't propagate scope to values
-                    ObjectData other = visitedObjects.get(objectValue.getValue());
-                    if (other != null
-                            && ("instance".equals(other.getScope())
-                            || ("singleton".equals(objectData.getScope()) && !"singleton".equals(other.getScope())))
-                            && !objectData.getScope().equals(other.getScope())) {
-                        scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).decrementAndGet();
-                        other.setInheritedScope(objectData.getScope());
-                        scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).incrementAndGet();
-                        propagationQueue.add(objectValue.getValue());
+            if (!objectToVisit.getClass().getName().contains("$Lambda")) { // Do not propagate through lambdas
+                for (ObjectValue objectValue : objectData.getValues()) {
+                    if (objectValue != null) { // Don't propagate scope to values
+                        ObjectData other = visitedObjects.get(objectValue.getValue());
+                        if (other != null
+                                && EngineInstance.get().shouldPropagateContext(other.getScope(), objectData.getScope())
+                                && !other.hasOwnScope()) {
+                            scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).decrementAndGet();
+                            other.setInheritedScope(objectData.getScope());
+                            scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).incrementAndGet();
+                            propagationQueue.add(objectValue.getValue());
+                        }
                     }
                 }
             }
             objectToVisit = propagationQueue.poll();
         }
+        output.print("<div class='frame'>");
         for (Map.Entry<String, AtomicInteger> stat : scopeStats.entrySet()) {
-            output.print(stat.getKey() + ": " + stat.getValue().get() + "\t");
+            output.println(stat.getKey() + ": " + stat.getValue().get());
         }
         output.println();
+        output.println("analyzing...");
+        output.println("</div>");
     }
 
     private void visitClass(Class<?> objectToVisit) {
-        Class<?> visitingClass = objectToVisit;
-        if (shouldIgnore(visitingClass)) {
+        if (shouldIgnore(objectToVisit)) {
             // Deliberately skip primitives and self
             return;
         }
 
-        if (visitingClass.getSuperclass() != null && !visitedObjects.containsKey(visitingClass.getSuperclass()) && !shouldIgnore(visitingClass.getSuperclass())) {
-            scannerQueue.add(visitingClass.getSuperclass());
+        if (objectToVisit.getSuperclass() != null && !visitedObjects.containsKey(objectToVisit.getSuperclass()) && !shouldIgnore(objectToVisit.getSuperclass())) {
+            scannerQueue.add(objectToVisit.getSuperclass());
         }
 
-        ObjectData objectData = new ObjectData("static"); //FIXME
-        String hash = computeHash(objectToVisit);
-        if (!hash.isEmpty()) {
-            objectHashes.put(hash, objectToVisit);
-        }
+        ObjectData objectData = new ObjectData("static");
         visitedObjects.put(objectToVisit, objectData);
 
-        for (Field field : Unreflection.getDeclaredFields(visitingClass)) {
+        for (Field field : Unreflection.getDeclaredFields(objectToVisit)) {
             if (Modifier.isStatic(field.getModifiers())
                     && !(field.isSynthetic() && "$assertionsDisabled".equals(field.getName()))) {
                 try {
@@ -436,11 +301,7 @@ public class Scanner {
             return;
         }
         Optional<String> detectedScope = ScopeDetector.detect(visitingClass);
-        ObjectData objectData = new ObjectData(detectedScope.orElse(null)); //FIXME
-        String hash = computeHash(objectToVisit);
-        if (!hash.isEmpty()) {
-            objectHashes.put(hash, objectToVisit);
-        }
+        ObjectData objectData = new ObjectData(detectedScope.orElse(null));
         visitedObjects.put(objectToVisit, objectData);
         Object unwrappedObject = unwrap(objectToVisit);
         if (unwrappedObject != objectToVisit && !shouldIgnore(unwrappedObject.getClass()) && shouldCascade(unwrappedObject.getClass())) {
@@ -480,6 +341,7 @@ public class Scanner {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void processFieldValue(Object objectToVisit, ObjectData objectData, Field field, Object value) {
         boolean cascade = true;
         if (value != null) {
@@ -545,11 +407,11 @@ public class Scanner {
                 ThreadGroup[] groups = readDeclaredField(poll, "groups");
                 int nthreads = readDeclaredField(poll, "nthreads");
                 Thread[] threads = readDeclaredField(poll, "threads");
-                for (int i = 0; i < ngroups; i++) {
-                    queue.add(groups[i]);
+                if (groups != null && ngroups > 0) {
+                    queue.addAll(Arrays.asList(groups).subList(0, ngroups));
                 }
-                for (int i = 0; i < nthreads; i++) {
-                    allThreads.add(threads[i]);
+                if (threads != null && nthreads > 0) {
+                    allThreads.addAll(Arrays.asList(threads).subList(0, nthreads));
                 }
             }
         }
@@ -558,7 +420,7 @@ public class Scanner {
         for (Thread thread : allThreads) {
             Object threadLocals = readDeclaredField(thread, "threadLocals");
             if (threadLocals != null) {
-                Object entry = invokeDeclaredMethod(threadLocals, "getEntry", ThreadLocal.class, value);
+                Object entry = getThreadLocalEntries(threadLocals, value);
                 if (entry != null) {
                     Object threadLocalValue = readDeclaredField(entry, "value");
                     if (threadLocalValue != value) {

@@ -12,6 +12,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Artem Godin on 9/28/2020.
@@ -40,6 +41,12 @@ public class VaadinEngine extends ServletEngine {
 
     @Override
     public String getName() {
-        return "Servlet+Vaadin";
+        return super.getName()+"-vaadin";
     }
+
+    @Override
+    public List<String> getContextOrder() {
+        return Arrays.asList("request", "vaadin-ui", "vaadin-session", "session", "singleton", "static");
+    }
+
 }

@@ -3,10 +3,7 @@ package org.vaadin.qa.cqt.suites;
 import org.vaadin.qa.cqt.Reference;
 import org.vaadin.qa.cqt.ReferenceType;
 import org.vaadin.qa.cqt.Suite;
-import org.vaadin.qa.cqt.annotations.Advice;
-import org.vaadin.qa.cqt.annotations.Disabled;
-import org.vaadin.qa.cqt.annotations.Scopes;
-import org.vaadin.qa.cqt.annotations.Warning;
+import org.vaadin.qa.cqt.annotations.*;
 
 import java.io.Serializable;
 import java.text.Format;
@@ -26,7 +23,6 @@ public final class FieldInspections extends Suite {
      *
      * @return
      */
-    @Disabled
     @Warning("Actual value of non-transient field in serializable object is not Serializable")
     @Scopes(exclude = "static")
     public Predicate<Reference> nonSerializableField() {
@@ -50,13 +46,17 @@ public final class FieldInspections extends Suite {
      *
      * @return
      */
-    @Disabled
     @Warning("Non-final field exposed via non-private setter")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> exposedSetterNonFinal() {
-        return field(
-                isNotFinal(),
-                setter(isNotPrivate())
+        return and(
+                field(
+                        isNotFinal(),
+                        setter(isNotPrivate())
+                ),
+                backreference(
+                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
+                )
         );
     }
 
@@ -66,13 +66,17 @@ public final class FieldInspections extends Suite {
      *
      * @return
      */
-    @Disabled
-    @Warning("Non-final field exposed via non-private setter")
+    @Warning("Non-final non-private field")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> exposedNonFinal() {
-        return field(
-                isNotFinal(),
-                isNotPrivate()
+        return and(
+                field(
+                        isNotFinal(),
+                        isNotPrivate()
+                ),
+                backreference(
+                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
+                )
         );
     }
 
@@ -84,20 +88,32 @@ public final class FieldInspections extends Suite {
      *
      * @return
      */
-    @Disabled
     @Advice("Non-final field: check for correct initialization and synchronization")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> nonFinal() {
-        return field(
-                isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
-                isNotFinal(),
-                isNotTransient(),
-                type(isNotPrivateClass(), isNot(String.class)),
-                declaringClass(isNotSyntheticClass())
+        return or(
+                field(
+                        isStatic(),
+                        isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
+                        isNotFinal(),
+                        isNotTransient(),
+                        type(isNotPrivateClass(), isNot(String.class)),
+                        declaringClass(isNotSyntheticClass()),
+                        modifiedByNonClassInit()
+                ),
+                field(
+                        isNotStatic(),
+                        isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
+                        isNotFinal(),
+                        isNotTransient(),
+                        type(isNotPrivateClass(), isNot(String.class)),
+                        declaringClass(isNotSyntheticClass()),
+                        modifiedByNonConstructor()
+                )
         );
     }
 
-    @Warning("Not thread-safe class")
+    @ProbableError("Not thread-safe class")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> nonThreadSafe() {
         return and(

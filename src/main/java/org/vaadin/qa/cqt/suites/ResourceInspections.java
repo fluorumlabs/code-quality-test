@@ -3,10 +3,7 @@ package org.vaadin.qa.cqt.suites;
 import org.vaadin.qa.cqt.Reference;
 import org.vaadin.qa.cqt.ReferenceType;
 import org.vaadin.qa.cqt.Suite;
-import org.vaadin.qa.cqt.annotations.Advice;
-import org.vaadin.qa.cqt.annotations.Disabled;
-import org.vaadin.qa.cqt.annotations.Scopes;
-import org.vaadin.qa.cqt.annotations.Warning;
+import org.vaadin.qa.cqt.annotations.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
@@ -38,7 +35,7 @@ public final class ResourceInspections extends Suite {
      *
      * @return
      */
-    @Warning("Spawning thread from static initializers")
+    @ProbableError("Spawning thread from static initializers")
     @Scopes("static")
     public Predicate<Reference> staticTimer() {
         return and(
@@ -51,7 +48,6 @@ public final class ResourceInspections extends Suite {
      * In a dynamic system like an application server or OSGI, you should take good care not to prevent ClassLoaders from garbage collection.
      * As you undeploy and redeploy individual applications in an application server you create new class loaders for them.
      * The old ones are unused and should be collected. Java isn't going to let that happen if there is a single dangling reference from container code into your application code.
-     * Note that Class stores reference to ClassLoader internally.
      * <p>
      * See: https://www.odi.ch/prog/design/newbies.php#56
      *
@@ -91,7 +87,7 @@ public final class ResourceInspections extends Suite {
      *
      * @return
      */
-    @Warning("Holding strong references to Class, Field, Method or Annotation")
+    @Warning("Holding strong references to Class")
     @Scopes({"static", "singleton"})
     public Predicate<Reference> classReference() {
         return and(
@@ -146,7 +142,6 @@ public final class ResourceInspections extends Suite {
      *
      * @return
      */
-    @Disabled
     @Warning("Store ExecutorService in fields of type ExecutorService or more specific")
     public Predicate<Reference> executorServiceFieldType() {
         return and(
@@ -171,8 +166,9 @@ public final class ResourceInspections extends Suite {
         return targetType(is(Thread.class, ExecutorService.class));
     }
 
-    @Disabled
-    @Warning("AutoClosable resource stored in a field")
+
+    @ProbableError("AutoClosable resource stored in a field")
+    @Scopes(exclude = {"static", "singleton"})
     public Predicate<Reference> autoClosableField() {
         return targetType(is(AutoCloseable.class));
     }
@@ -184,7 +180,7 @@ public final class ResourceInspections extends Suite {
      *
      * @return
      */
-    @Warning("ThreadLocal value is not removed after work is done")
+    @ProbableError("ThreadLocal value is not removed after work is done")
     public Predicate<Reference> nonCleanThreadLocal() {
         return and(
                 referenceTypeIs(ReferenceType.WAITING_THREAD_LOCAL, ReferenceType.TERMINATED_THREAD_LOCAL),

@@ -21,11 +21,11 @@ public class CollectionInspections extends Suite {
 
     static {
         try {
-            UNDERLYING_MAP_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_MAP,"m");
+            UNDERLYING_MAP_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_MAP, "m");
             UNDERLYING_MAP_FIELD.setAccessible(true);
-            UNDERLYING_SET_FROM_MAP_FIELD = Unreflection.getDeclaredField(SET_FROM_MAP,"m");
+            UNDERLYING_SET_FROM_MAP_FIELD = Unreflection.getDeclaredField(SET_FROM_MAP, "m");
             UNDERLYING_SET_FROM_MAP_FIELD.setAccessible(true);
-            UNDERLYING_COLLECTION_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_COLLECTION,"c");
+            UNDERLYING_COLLECTION_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_COLLECTION, "c");
             UNDERLYING_COLLECTION_FIELD.setAccessible(true);
         } catch (NoSuchFieldException e) {
             throw new UnsupportedOperationException(e);
@@ -78,8 +78,12 @@ public class CollectionInspections extends Suite {
 
     private Predicate<Reference> exposedOrModified() {
         return or(
-                field(isNotPrivate()),
-                fieldIsExposedViaGetter(),
+                and(
+                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
+                        backreference(
+                                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
+                        )
+                ),
                 field(
                         isStatic(),
                         type(is(Map.class)),
@@ -106,7 +110,7 @@ public class CollectionInspections extends Suite {
     /**
      * @return
      */
-    @Warning("Non-thread-safe mutable collection")
+    @ProbableError("Non-thread-safe mutable collection")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> nonThreadSafeCollection() {
         return and(
@@ -124,7 +128,7 @@ public class CollectionInspections extends Suite {
         );
     }
 
-    @Warning("Non-thread-safe mutable collection")
+    @ProbableError("Non-thread-safe mutable collection")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> nonThreadSafeSetFromMap() {
         return and(
@@ -147,30 +151,12 @@ public class CollectionInspections extends Suite {
     public Predicate<Reference> nonThreadSafeCollectionWasNull() {
         return and(
                 ownerType(isNotAnnotatedWith("org.springframework.boot.context.properties.ConfigurationProperties")),
-                targetType(
+                field(type(
                         is(Map.class, Collection.class),
                         isNot(THREAD_SAFE_COLLECTIONS),
                         isNot(UNMODIFIABLE_COLLECTIONS),
                         isNot(SET_FROM_MAP)
-                ),
-                field(isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value")),
-                target(Objects::isNull),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE),
-                exposedOrModified()
-        );
-    }
-
-    @Warning("Potentially non-thread-safe mutable collection (was null)")
-    @Scopes({"static", "singleton", "session"})
-    public Predicate<Reference> nonThreadSafeSetFromMapWasNull() {
-        return and(
-                ownerType(isNotAnnotatedWith("org.springframework.boot.context.properties.ConfigurationProperties")),
-                targetType(is(SET_FROM_MAP)),
-                underlyingMap(
-                        isNot(THREAD_SAFE_COLLECTIONS)
-                                .and(isNot(UNMODIFIABLE_COLLECTIONS))
-                                .and(isNot(SET_FROM_MAP))
-                ),
+                )),
                 field(isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value")),
                 target(Objects::isNull),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE),
@@ -193,8 +179,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Store ConcurrentSkipListMap in fields of type ConcurrentMap or ConcurrentSkipListMap")
-    @Disabled
+    @Advice("Store ConcurrentSkipListMap in fields of type ConcurrentMap or ConcurrentSkipListMap")
     public Predicate<Reference> cslmFieldType() {
         return and(
                 targetType(is(ConcurrentSkipListMap.class)),
@@ -212,8 +197,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Store ConcurrentHashMap in fields of type ConcurrentHashMap")
-    @Disabled
+    @Advice("Store ConcurrentHashMap in fields of type ConcurrentHashMap")
     public Predicate<Reference> chmFieldType() {
         return and(
                 targetType(is(ConcurrentHashMap.class)),
@@ -227,7 +211,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentHashMap instead of Hashtable")
+    @Advice("Use non-blocking ConcurrentHashMap instead of Hashtable")
     public Predicate<Reference> chmForHashtable() {
         return and(
                 targetType(isExactly(Hashtable.class)),
@@ -240,7 +224,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentHashMap instead of Collections.synchronizedMap(HashMap)")
+    @Advice("Use non-blocking ConcurrentHashMap instead of Collections.synchronizedMap(HashMap)")
     public Predicate<Reference> chmForSynchronizedHashMap() {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_MAP)),
@@ -258,7 +242,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Advice("Consider using ClassValue instead of Map<Class, ...>")
+    @Suggestion("Consider using ClassValue instead of Map<Class, ...>")
     public Predicate<Reference> cvForClassMap() {
         return and(
                 field(
@@ -278,7 +262,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentSkipListMap instead of Collections.synchronizedMap(TreeMap)")
+    @Advice("Use non-blocking ConcurrentSkipListMap instead of Collections.synchronizedMap(TreeMap)")
     public Predicate<Reference> cslmForSynchronizedTreeMap() {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_MAP)),
@@ -292,7 +276,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentHashMap.newKeySet() instead of Collections.synchronizedSet(HashSet)")
+    @Advice("Use non-blocking ConcurrentHashMap.newKeySet() instead of Collections.synchronizedSet(HashSet)")
     public Predicate<Reference> chmKeySetForSynchronizedHashSet() {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_SET)),
@@ -306,7 +290,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentSkipListSet instead of Collections.synchronizedSet(TreeSet)")
+    @Advice("Use non-blocking ConcurrentSkipListSet instead of Collections.synchronizedSet(TreeSet)")
     public Predicate<Reference> cslsForSynchronizedTreeSet() {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_SET)),
@@ -320,7 +304,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking CopyOnWriteArrayList instead of Collections.synchronizedList(ArrayList)")
+    @Advice("Use non-blocking CopyOnWriteArrayList instead of Collections.synchronizedList(ArrayList)")
     public Predicate<Reference> cowalForSynchronizedArrayList() {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_LIST)),
@@ -334,7 +318,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking CopyOnWriteArrayList instead of Vector")
+    @Advice("Use non-blocking CopyOnWriteArrayList instead of Vector")
     public Predicate<Reference> cowalForVector() {
         return and(
                 targetType(is(Vector.class)),
@@ -347,7 +331,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentLinkedQueue instead of LinkedBlockingQueue")
+    @Advice("Use non-blocking ConcurrentLinkedQueue instead of LinkedBlockingQueue")
     public Predicate<Reference> clqForLinkedBlockingQueue() {
         return and(
                 targetType(is(LinkedBlockingQueue.class)),
@@ -360,7 +344,7 @@ public class CollectionInspections extends Suite {
      *
      * @return
      */
-    @Suggestion("Use non-blocking ConcurrentLinkedDeque instead of LinkedBlockingDeque")
+    @Advice("Use non-blocking ConcurrentLinkedDeque instead of LinkedBlockingDeque")
     public Predicate<Reference> cldForLinkedBlockingQueue() {
         return and(
                 targetType(is(LinkedBlockingDeque.class)),
@@ -371,7 +355,7 @@ public class CollectionInspections extends Suite {
     /**
      * @return
      */
-    @Suggestion("Use EnumMap instead of Map<Enum, ...>")
+    @Advice("Use EnumMap instead of Map<Enum, ...>")
     public Predicate<Reference> emForMapEnum() {
         return and(
                 field(
@@ -386,7 +370,7 @@ public class CollectionInspections extends Suite {
     /**
      * @return
      */
-    @Suggestion("Use EnumSet instead of Set<Enum>")
+    @Advice("Use EnumSet instead of Set<Enum>")
     public Predicate<Reference> esForSetEnum() {
         return and(
                 field(
@@ -401,14 +385,13 @@ public class CollectionInspections extends Suite {
     /**
      * @return
      */
-    @Disabled
     @Warning("Modifiable collection exposed via non-private field or non-private getter")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> exposedModifiableCollection() {
         return and(
                 ownerType(isNotPrivateClass()),
                 targetType(is(Collection.class, Map.class), isNot(UNMODIFIABLE_COLLECTIONS)),
-                fieldIsExposedViaGetter().or(field(isNotPrivate())),
+                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE)
         );
     }
@@ -416,14 +399,13 @@ public class CollectionInspections extends Suite {
     /**
      * @return
      */
-    @Disabled
     @Warning("Array exposed via non-private field or non-private getter")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> exposedArray() {
         return and(
                 ownerType(isNotPrivateClass()),
                 targetType(isArray()),
-                fieldIsExposedViaGetter().or(field(isNotPrivate())),
+                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE)
         );
     }

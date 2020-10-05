@@ -1,5 +1,7 @@
 package org.vaadin.qa.cqt.engine;
 
+import java.util.List;
+
 /**
  * Created by Artem Godin on 9/28/2020.
  */
@@ -18,4 +20,13 @@ public abstract class Engine {
     public abstract Object unwrap(Object proxy);
 
     public abstract String getName();
+
+    public abstract List<String> getContextOrder();
+
+    public boolean shouldPropagateContext(String currentContext, String newContext) {
+        List<String> contextOrder = getContextOrder();
+        int currentPos = contextOrder.indexOf(currentContext);
+        int newPos = contextOrder.indexOf(newContext);
+        return newPos >= 0 && (currentPos < newPos);
+    }
 }

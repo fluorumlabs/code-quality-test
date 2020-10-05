@@ -15,6 +15,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSession;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Artem Godin on 9/28/2020.
@@ -67,6 +68,12 @@ public class SpringEngine extends DefaultEngine {
 
     @Override
     public String getName() {
-        return "Spring";
+        return super.getName()+"-spring";
     }
+
+    @Override
+    public List<String> getContextOrder() {
+        return Arrays.asList("request", "session", "singleton", "application", "restart", "static");
+    }
+
 }

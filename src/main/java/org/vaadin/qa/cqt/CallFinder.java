@@ -8,6 +8,7 @@ import jdk.internal.org.objectweb.asm.tree.analysis.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -19,10 +20,10 @@ public class CallFinder {
     private final String fieldName;
     private final List<String> methods;
 
-    public CallFinder(Field field, List<String> methods) {
+    public CallFinder(Member field, List<String> methods) {
         clazz = field.getDeclaringClass();
         fieldName = field.getName();
-        this.methods = methods;
+        this.methods = Collections.unmodifiableList(methods);
     }
 
     public boolean calledByNot(String... methodNames) {
@@ -68,6 +69,8 @@ public class CallFinder {
         return fields.contains(fieldName);
     }
 
+
+
     private Set<String> findCallingMethods() throws IOException, AnalyzerException {
         ClassNode classNode = new ClassNode();
         ClassReader cr = new ClassReader(clazz.getName());
@@ -88,7 +91,6 @@ public class CallFinder {
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
-                    Frame<SourceValue> frame = analyzer.getFrames()[i];
                     if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
                         if (fieldWasConsumedFromStack(i, analyzer) && methods.contains(insn.name)) {
                             methodsWithInvocations.add(signature);
@@ -103,7 +105,6 @@ public class CallFinder {
                     }
                 } else if (abstractInsnNodes[i] instanceof InvokeDynamicInsnNode) {
                     InvokeDynamicInsnNode insn = (InvokeDynamicInsnNode) abstractInsnNodes[i];
-                    Frame<SourceValue> frame = analyzer.getFrames()[i];
 
                     boolean match = false;
                     boolean selfMatch = false;
@@ -131,8 +132,7 @@ public class CallFinder {
 
         Set<String> result = new HashSet<>();
         Set<String> visitedMethods = new HashSet<>(methodsWithInvocations);
-        Queue<String> unroll = new ArrayDeque<>();
-        unroll.addAll(methodsWithInvocations);
+        Queue<String> unroll = new ArrayDeque<>(methodsWithInvocations);
 
         while (unroll.peek() != null) {
             String signature = unroll.poll();

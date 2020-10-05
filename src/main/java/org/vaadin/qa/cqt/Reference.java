@@ -1,49 +1,68 @@
 package org.vaadin.qa.cqt;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.vaadin.qa.cqt.utils.HtmlFormatter;
 
 import javax.annotation.Nullable;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringEscapeUtils.escapeJava;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
 
 /**
  * Created by Artem Godin on 9/23/2020.
  */
 public final class Reference {
-    private static final Pattern PACKAGE_PATTERN = Pattern.compile("(\\b[a-z0-9_]+[.]\\b)");
-    private static final int MAX_CONTEXT_PATH_DEPTH = 5;
+    private static final int MAX_CONTEXT_PATH_DEPTH = 10;
 
+    private static final Pattern SEPARATOR_PATTERN = Pattern.compile("(,\\s*)");
+    private static final Pattern LT_PATTERN = Pattern.compile("&lt;", Pattern.LITERAL);
+    private static final Pattern GT_PATTERN = Pattern.compile("&gt;", Pattern.LITERAL);
+    private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile("<span class=\"class\"></span>", Pattern.LITERAL);
+    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile("(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
+
+    private static final HtmlFormatter SCOPE_FORMAT = value().escapeHtml().styled("scope");
+    private static final HtmlFormatter PACKAGE_NAME_FORMAT = value().escapeHtml().styled("class package");
+    private static final HtmlFormatter CLASS_NAME_FORMAT = value().escapeHtml().styled("class");
+    private static final HtmlFormatter TYPE_NAME_FORMAT = value()
+            .removePackages()
+            .escapeHtml()
+            .replace(INNER_CLASS_PATTERN, "$2.")
+            .replace(LT_PATTERN, "</span><span class=\"generic\">&lt;<span class=\"class\">")
+            .replace(GT_PATTERN, "</span>&gt;</span><span class=\"class\">")
+            .replace(SEPARATOR_PATTERN, "</span>$1<span class=\"class\">")
+            .styled("class")
+            .replace(EMPTY_CLASS_PATTERN, "");
+    private static final HtmlFormatter GENERIC_ARGUMENTS_FORMAT = value().styled("generic");
+    private static final HtmlFormatter REFERENCE_TYPE_FORMAT = value().escapeHtml().styled("reference");
+    private static final HtmlFormatter VISIBILITY_MODIFIER_FORMAT = value().styled("modifier");
+    private static final HtmlFormatter FIELD_NAME_FORMAT = value().escapeHtml().styled("field");
+    private static final HtmlFormatter PARTIAL_FORMAT = value().styled("partial");
+    private static final HtmlFormatter STATIC_FORMAT = value().styled("static");
+    private static final HtmlFormatter TYPEHINT_VALUE_FORMAT = value().styled("typehint");
+    private static final HtmlFormatter NULL_VALUE_FORMAT = value().styled("value null");
+    private static final HtmlFormatter STRING_VALUE_FORMAT = value().removeNewLines().escapeJava().wrapWith("\"").trimTo(240).escapeHtml().styled("value string");
+    private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value().escapeHtml().styled("value primitive");
+    private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value().removeNewLines().trimTo(240).escapeHtml().styled("value");
+    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().escapeHtml().styled("value default");
     @Nullable
     private final Object target;
     @Nullable
     private final Class<?> targetClass;
-    @Nullable
-    private final ObjectData targetData;
-
     private final Object owner;
     private final Class<?> ownerClass;
     private final ObjectData ownerData;
-
     private final ReferenceType referenceType;
     @Nullable
     private final Field field;
-
     private final Scanner scanner;
 
-    private Reference(@Nullable Object target, @Nullable Class<?> targetClass, @Nullable ObjectData targetData, Object owner, Class<?> ownerClass, ObjectData ownerData, ReferenceType referenceType, @Nullable Field field, Scanner scanner) {
+    private Reference(@Nullable Object target, @Nullable Class<?> targetClass, Object owner, Class<?> ownerClass, ObjectData ownerData, ReferenceType referenceType, @Nullable Field field, Scanner scanner) {
         this.target = target;
         this.targetClass = targetClass;
-        this.targetData = targetData;
         this.owner = owner;
         this.ownerClass = ownerClass;
         this.ownerData = ownerData;
@@ -55,7 +74,6 @@ public final class Reference {
     public static Reference from(Object owner, ObjectValue value, Scanner scanner) {
         Object targetValue = value.getValue();
         Class<?> targetClass = targetValue == null ? null : targetValue.getClass();
-        ObjectData targetData = targetValue == null ? null : scanner.getData(targetValue);
         Class<?> ownerClass;
         if (value.getField() != null) {
             ownerClass = value.getField().getDeclaringClass();
@@ -65,7 +83,6 @@ public final class Reference {
         return new Reference(
                 targetValue,
                 targetClass,
-                targetData,
                 owner instanceof Class ? null : owner,
                 ownerClass,
                 scanner.getData(owner),
@@ -81,7 +98,6 @@ public final class Reference {
         return new Reference(
                 owner instanceof Class ? null : owner,
                 ownerClass,
-                scanner.getData(owner),
                 owner instanceof Class ? null : owner,
                 ownerClass,
                 scanner.getData(owner),
@@ -92,30 +108,48 @@ public final class Reference {
     }
 
     public static String formatClassName(Class<?> clazz) {
+        return formatClassName(clazz, true);
+    }
+
+    public static String formatClassName(Class<?> clazz, boolean includePackage) {
         if (clazz.isArray()) {
-            return formatClassName(clazz.getComponentType()) + "[]";
+            return formatClassName(clazz.getComponentType(), includePackage) + REFERENCE_TYPE_FORMAT.format("[]");
         }
 
-        StringBuilder sb = new StringBuilder(clazz.getCanonicalName() == null ? clazz.getName() : clazz.getCanonicalName());
+        LinkedList<String> classParts = new LinkedList<>();
+        Class<?> currentClass = clazz;
+        while (currentClass != null) {
+            classParts.addFirst(currentClass.getSimpleName());
+            currentClass = currentClass.getDeclaringClass();
+        }
+
+        String className;
+        if (includePackage) {
+            className = (clazz.getPackage() == null ? "" : PACKAGE_NAME_FORMAT.format(clazz.getPackage().getName() + ".")) + CLASS_NAME_FORMAT.format(String.join(".", classParts));
+        } else {
+            className = CLASS_NAME_FORMAT.format(String.join(".", classParts));
+        }
+
+        StringBuilder sb = new StringBuilder("");
 
         TypeVariable<?>[] typeparms = clazz.getTypeParameters();
         if (typeparms.length > 0) {
-            boolean first = true;
+            boolean continued = false;
             sb.append('<');
             for (TypeVariable<?> typeparm : typeparms) {
-                if (!first)
+                if (continued)
                     sb.append(',');
-                sb.append(PACKAGE_PATTERN.matcher(typeparm.getTypeName()).replaceAll(""));
-                first = false;
+                sb.append(TYPE_NAME_FORMAT.format(typeparm.getTypeName()));
+                continued = true;
             }
             sb.append('>');
         }
 
-        return sb.toString();
+        return className + GENERIC_ARGUMENTS_FORMAT.format(sb);
     }
 
     public static String formatShortClassName(Class<?> clazz) {
-        return PACKAGE_PATTERN.matcher(formatClassName(clazz)).replaceAll("");
+        return formatClassName(clazz, false);
     }
 
     public boolean isInScope() {
@@ -127,11 +161,11 @@ public final class Reference {
     }
 
     public boolean hasOwnScope() {
-        return ownerData!=null && ownerData.hasOwnScope();
+        return ownerData != null && ownerData.hasOwnScope();
     }
 
     public String formatScope() {
-        return ownerData.getPrintableScope();
+        return SCOPE_FORMAT.format(ownerData.getPrintableScope());
     }
 
     public String formatOwnerClass() {
@@ -142,55 +176,39 @@ public final class Reference {
         }
     }
 
-    public String formatOwnerClassWithLink() {
-        String className = formatOwnerClass();
-
-        String s = escapeHtml4(className);
-        if (owner != null) {
-            if (scanner.getData(owner) != null) {
-                return "<a href='/" + encodeValue(Scanner.computeHash(owner)) + "'>" + s + "</a>";
-            } else {
-                return s;
-            }
-        } else {
-            if (scanner.getData(ownerClass) != null) {
-                return "<a href='/" + encodeValue(Scanner.computeHash(ownerClass)) + "'>" + s + "</a>";
-            } else {
-                return s;
-            }
-        }
-    }
-
     public String formatField() {
         if (field == null) {
             return "";
         } else {
-            return formatFieldModifiers() + " " + formatFieldType() + " " + field.getName() + referenceType;
+            return VISIBILITY_MODIFIER_FORMAT.format(getFieldModifiers()) + " "
+                    + TYPE_NAME_FORMAT.format(getFieldType()) + " "
+                    + FIELD_NAME_FORMAT.format(field.getName())
+                    + REFERENCE_TYPE_FORMAT.format(referenceType);
         }
     }
 
-    public String formatFieldModifiers() {
+    public String getFieldModifiers() {
         if (field == null) {
             return "";
         }
         return Modifier.toString(field.getModifiers());
     }
 
-    public String formatFieldType() {
+    public String getFieldType() {
         if (field == null) {
             return "";
         }
-        return PACKAGE_PATTERN.matcher(field.getGenericType().getTypeName()).replaceAll("");
+        return field.getGenericType().getTypeName();
     }
 
-    public String formatReference() {
+    public String getReference() {
         if (field == null) {
-            return formatClassName(ownerClass);
+            return ownerClass.getTypeName();
         } else {
             if (owner != null && !field.getDeclaringClass().getName().equals(owner.getClass().getName())) {
-                return formatClassName(owner.getClass()) + ": " + formatClassName(field.getDeclaringClass()) + ": " + formatFieldModifiers() + " " + formatFieldType() + " " + field.getName() + referenceType;
+                return owner.getClass().getTypeName() + ": " + field.getDeclaringClass().getTypeName() + ": " + getFieldModifiers() + " " + getFieldType() + " " + field.getName() + referenceType;
             } else {
-                return formatClassName(field.getDeclaringClass()) + ": " + formatFieldModifiers() + " " + formatFieldType() + " " + field.getName() + referenceType;
+                return field.getDeclaringClass().getTypeName() + ": " + getFieldModifiers() + " " + getFieldType() + " " + field.getName() + referenceType;
             }
         }
     }
@@ -199,7 +217,12 @@ public final class Reference {
         if (field == null) {
             return "";
         } else {
-            return "." + (Modifier.isStatic(field.getModifiers()) ? "(static)" : "") + field.getName() + referenceType;
+            String partial = FIELD_NAME_FORMAT.format(field.getName()) + REFERENCE_TYPE_FORMAT.format(referenceType);
+            if (Modifier.isStatic(field.getModifiers())) {
+                return "." + STATIC_FORMAT.format(partial);
+            } else {
+                return "." + partial;
+            }
         }
     }
 
@@ -219,7 +242,7 @@ public final class Reference {
 
         return map.entrySet().stream()
                 .filter(ref -> ref.getKey().isInScope())
-                .map(e -> e.getKey().formatOwnerClassWithLink() + escapeHtml4(e.getValue()))
+                .map(e -> e.getKey().formatOwnerClass() + PARTIAL_FORMAT.format(e.getValue()))
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
@@ -241,8 +264,8 @@ public final class Reference {
                 }
                 visitedObjects.put(reference.owner, true);
                 for (Reference backreference : scanner.getBackreferences(reference.owner)) {
-                    if(backreference.hasOwnScope() && backreference.getScope().equals(getScope())) {
-                        return formatClassName(backreference.ownerClass)+backreference.formatPartial()+map.get(reference);
+                    if (backreference.hasOwnScope() && backreference.getScope().equals(getScope())) {
+                        return formatClassName(backreference.ownerClass) + PARTIAL_FORMAT.format(backreference.formatPartial() + map.get(reference));
                     }
                     map.put(backreference, backreference.formatPartial() + map.get(reference));
                 }
@@ -253,31 +276,24 @@ public final class Reference {
 
     public String formatValue() {
         if (target == null) {
-            return "null";
+            return NULL_VALUE_FORMAT.format("null");
         }
         String formatted;
         if (target instanceof String) {
-            formatted = "\"" + escapeJava((String) target) + "\"";
+            return STRING_VALUE_FORMAT.format(target);
         } else if (Modifier.isFinal(targetClass.getModifiers()) && (target instanceof Number || target instanceof Character || target instanceof Boolean)) {
-            formatted = Objects.toString(target);
+            return PRIMITIVE_VALUE_FORMAT.format(target);
         } else {
             try {
                 if (targetClass.isArray()) {
-                    formatted = "(" + formatShortClassName(targetClass) + ") " + Arrays.toString((Object[]) target);
+                    return TYPEHINT_VALUE_FORMAT.format("(" + formatShortClassName(targetClass) + ")") + " " + TOSTRING_VALUE_FORMAT.format(Arrays.toString((Object[]) target));
                 } else {
-                    formatted = "(" + formatShortClassName(targetClass) + ") " + Objects.toString(target);
+                    return TYPEHINT_VALUE_FORMAT.format("(" + formatShortClassName(targetClass) + ")") + " " + TOSTRING_VALUE_FORMAT.format(target);
                 }
             } catch (Exception e) {
                 // ignore exceptions during toString
-                formatted = formatClassName(targetClass) + "@" + Integer.toHexString(System.identityHashCode(target));
+                return DEFAULT_VALUE_FORMAT.format(formatClassName(targetClass) + "@" + Integer.toHexString(System.identityHashCode(target)));
             }
-        }
-
-        String s = escapeHtml4(trimTo(formatted, 120));
-        if (scanner.getData(target)!=null) {
-            return "<a href='/"+encodeValue(Scanner.computeHash(target))+"'>" + s + "</a>";
-        } else {
-            return s;
         }
     }
 
@@ -291,21 +307,12 @@ public final class Reference {
         return targetClass;
     }
 
-    @Nullable
-    public ObjectData getTargetData() {
-        return targetData;
-    }
-
     public Object getOwner() {
         return owner;
     }
 
     public Class<?> getOwnerClass() {
         return ownerClass;
-    }
-
-    public ObjectData getOwnerData() {
-        return ownerData;
     }
 
     public ReferenceType getReferenceType() {
@@ -319,22 +326,5 @@ public final class Reference {
 
     public Scanner getScanner() {
         return scanner;
-    }
-
-    private static String trimTo(String text, int length) {
-        text = text.replace('\n', ' ').replace('\r', ' ');
-        if (text.length() < length) {
-            return text;
-        } else {
-            return text.substring(0, length)+"...";
-        }
-    }
-
-    private static String encodeValue(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException(ex.getCause());
-        }
     }
 }

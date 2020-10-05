@@ -3,6 +3,9 @@ package org.vaadin.qa.cqt.engine;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.*;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Artem Godin on 9/28/2020.
  */
@@ -30,6 +33,12 @@ public class SpringVaadinEngine extends SpringServletEngine {
 
     @Override
     public String getName() {
-        return "Spring+Servlet+Vaadin";
+        return super.getName()+"-vaadin";
     }
+
+    @Override
+    public List<String> getContextOrder() {
+        return Arrays.asList("request", "vaadin-ui", "vaadin-session", "session", "singleton", "application", "restart", "static");
+    }
+
 }

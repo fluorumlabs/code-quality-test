@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Report
+@Report(name = "Suggestion", level = Level.INFO)
 public @interface Suggestion {
     String value();
 }

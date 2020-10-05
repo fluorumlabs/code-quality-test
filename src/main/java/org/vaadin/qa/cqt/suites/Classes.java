@@ -43,6 +43,7 @@ public final class Classes {
             EMPTY_SORTED_MAP,
             EMPTY_NAVIGABLE_MAP,
             UNMODIFIABLE_COLLECTION,
+            UNMODIFIABLE_SET,
             UNMODIFIABLE_MAP,
             SINGLETON,
             SINGLETON_LIST,

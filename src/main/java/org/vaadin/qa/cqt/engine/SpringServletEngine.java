@@ -30,6 +30,6 @@ public class SpringServletEngine extends SpringEngine {
 
     @Override
     public String getName() {
-        return "Spring+Servlet";
+        return super.getName()+"-servlet";
     }
 }

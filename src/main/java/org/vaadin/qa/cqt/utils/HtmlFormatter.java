@@ -2,6 +2,7 @@ package org.vaadin.qa.cqt.utils;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +11,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
@@ -44,28 +46,36 @@ public interface HtmlFormatter extends Function<String, String> {
         return apply(Objects.toString(o));
     }
 
+    default String format(String str) {
+        return apply(str);
+    }
+
     default HtmlFormatter urlEncode() {
-        return (HtmlFormatter) andThen(HtmlFormatter::encodeValue);
+        return andThen(HtmlFormatter::encodeValue);
     }
 
     default HtmlFormatter trim() {
-        return (HtmlFormatter) andThen(String::trim);
+        return andThen(String::trim);
     }
 
     default HtmlFormatter removeNewLines() {
-        return (HtmlFormatter) andThen(str -> str.replace('\n', ' ').replace('\r', ' '));
+        return andThen(str -> str.replace('\n', ' ').replace('\r', ' '));
     }
 
     default HtmlFormatter trimTo(int len) {
-        return (HtmlFormatter) andThen(str -> trimTo(str, len));
+        return andThen(str -> trimTo(str, len));
     }
 
     default HtmlFormatter wrapWith(String str) {
-        return (HtmlFormatter) andThen(s -> String.join("", str, s, str));
+        return wrapWith(str, str);
+    }
+
+    default HtmlFormatter wrapWith(String left, String right) {
+        return andThen(s -> String.join("", left, s, right));
     }
 
     default HtmlFormatter replace(Pattern pattern, String replacement) {
-        return (HtmlFormatter) andThen(s -> pattern.matcher(s).replaceAll(replacement));
+        return andThen(s -> pattern.matcher(s).replaceAll(replacement));
     }
 
     default HtmlFormatter removePackages() {
@@ -77,7 +87,7 @@ public interface HtmlFormatter extends Function<String, String> {
     }
 
     default HtmlFormatter decorate(String tag) {
-        return (HtmlFormatter) andThen(s -> String.join("", "<", tag, ">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty()?"":String.join("", "<", tag, ">", s, "</", tag, ">"));
     }
 
     default HtmlFormatter decorate(String tag, Map<String, String> attributes) {
@@ -87,11 +97,11 @@ public interface HtmlFormatter extends Function<String, String> {
         String attrs = attributes.entrySet().stream()
                 .map(entry -> String.join("", entry.getKey(), "=\"", escapeHtml4(entry.getValue()), "\""))
                 .collect(Collectors.joining(" "));
-        return (HtmlFormatter) andThen(s -> String.join("", "<", tag, " ", attrs, ">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty()?"":String.join("", "<", tag, " ", attrs, ">", s, "</", tag, ">"));
     }
 
     default HtmlFormatter decorate(String tag, String attribute, String value) {
-        return (HtmlFormatter) andThen(s -> String.join("", "<", tag, " ", attribute, "=\"", escapeHtml4(value), "\">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty()?"":String.join("", "<", tag, " ", attribute, "=\"", escapeHtml4(value), "\">", s, "</", tag, ">"));
     }
 
     default HtmlFormatter styled(String className) {
@@ -99,11 +109,16 @@ public interface HtmlFormatter extends Function<String, String> {
     }
 
     default HtmlFormatter escapeHtml() {
-        return (HtmlFormatter) andThen(StringEscapeUtils::escapeHtml4);
+        return andThen(StringEscapeUtils::escapeHtml4);
     }
 
     default HtmlFormatter escapeJava() {
-        return (HtmlFormatter) andThen(StringEscapeUtils::escapeJava);
+        return andThen(StringEscapeUtils::escapeJava);
+    }
+
+    default <V> HtmlFormatter andThen(HtmlFormatter after) {
+        Objects.requireNonNull(after);
+        return s -> after.apply(apply(s));
     }
 
 }

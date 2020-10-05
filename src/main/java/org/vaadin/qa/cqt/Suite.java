@@ -15,7 +15,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -42,6 +41,7 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
                     .filter(annotation -> annotation.annotationType().getAnnotation(Report.class) != null)
                     .findFirst();
             report.ifPresent(annotation -> {
+                Report reportAnnotation = annotation.annotationType().getAnnotation(Report.class);
                 Scopes scopes = method.getAnnotation(Scopes.class);
                 Predicate<Reference> preFilter = null;
 
@@ -69,7 +69,7 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
                         predicate = preFilter.and(predicate);
                     }
                     String message = (String) annotation.annotationType().getMethod("value").invoke(annotation);
-                    inspections.add(new Inspection(predicate, annotation.annotationType().getSimpleName(), message + " ["+toKebabCase(method.getName())+ "]"));
+                    inspections.add(new Inspection(reportAnnotation.level(), predicate, reportAnnotation.name(), message, getClass().getSimpleName() + "." + method.getName()));
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     throw new IllegalStateException("Cannot import test suite method", e);
                 }
@@ -155,30 +155,28 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
         return ref -> ref.getField() == null;
     }
 
-    public Predicate<Reference> isSeenIn(String... scopes) {
-        return reference -> scanner.getBackreferences(reference.getOwner()).stream()
-                .map(Reference::getScope)
-                .anyMatch(data -> {
-                    for (String scope : scopes) {
-                        if (scope.equals(data)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+    public Predicate<Reference> isInContext(String... scopes) {
+        return reference -> {
+            String data = reference.getScope();
+            for (String scope : scopes) {
+                if (scope.equals(data)) {
+                    return true;
+                }
+            }
+            return false;
+        };
     }
 
-    public Predicate<Reference> isSeenExcept(String... scopes) {
-        return reference -> scanner.getBackreferences(reference.getOwner()).stream()
-                .map(Reference::getScope)
-                .anyMatch(data -> {
-                    for (String scope : scopes) {
-                        if (scope.equals(data)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
+    public Predicate<Reference> isNotInContext(String... scopes) {
+        return reference -> {
+            String data = reference.getScope();
+            for (String scope : scopes) {
+                if (scope.equals(data)) {
+                    return false;
+                }
+            }
+            return true;
+        };
     }
 
     public Predicate<Reference> fieldIsExposedViaGetter() {
@@ -205,13 +203,27 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
         return field -> new CallFinder(field, Arrays.asList(methodNames)).calledByNot("<init>");
     }
 
-    private static final Pattern CAMELCASE_CONVERT_STAGE1 = Pattern.compile("([a-z0-9])([A-Z])");
+    public Predicate<Field> modifiedByNonClassInit() {
+        return field -> new ModificationFinder(field).modifiedByNot("<clinit>");
+    }
 
-    private static final Pattern CAMELCASE_CONVERT_STAGE2 = Pattern.compile("([A-Z])([A-Z])(?=[a-z])");
+    public Predicate<Field> modifiedByNonConstructor() {
+        return field -> new ModificationFinder(field).modifiedByNot("<init>");
+    }
 
-    private static String toKebabCase(String camelCase) {
-        String stage1 = CAMELCASE_CONVERT_STAGE1.matcher(camelCase).replaceAll("$1-$2");
-        String stage2 = CAMELCASE_CONVERT_STAGE2.matcher(stage1).replaceAll("$1-$2");
-        return stage2.toLowerCase();
+    public Predicate<Reference> backreference(Predicate<Reference> referencePredicate) {
+        return reference -> scanner.getBackreferences(reference.getOwner()).stream().anyMatch(referencePredicate);
+    }
+
+    public Predicate<Reference> backreference(Predicate<Reference>... referencePredicates) {
+        return reference -> scanner.getBackreferences(reference.getOwner()).stream().anyMatch(and(referencePredicates));
+    }
+
+    public Predicate<Reference> targetBackreference(Predicate<Reference> referencePredicate) {
+        return reference -> reference.getTarget() != null && scanner.getBackreferences(reference.getTarget()).stream().anyMatch(referencePredicate);
+    }
+
+    public Predicate<Reference> targetBackreference(Predicate<Reference>... referencePredicates) {
+        return reference -> reference.getTarget() != null && scanner.getBackreferences(reference.getTarget()).stream().anyMatch(and(referencePredicates));
     }
 }

@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Report(name = "Warning", level = Level.WARNING)
-public @interface Warning {
+@Report(name = "Probable Error", level = Level.ERROR)
+public @interface ProbableError {
     String value();
 }
