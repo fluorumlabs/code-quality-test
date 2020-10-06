@@ -4,9 +4,13 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.*;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.vaadin.qa.cqt.ScopeDetector;
+import org.vaadin.qa.cqt.engine.spring.ContextListener;
 
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
@@ -16,6 +20,7 @@ import javax.servlet.http.HttpSession;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Created by Artem Godin on 9/28/2020.
@@ -23,7 +28,9 @@ import java.util.List;
 public class SpringEngine extends DefaultEngine {
     @Override
     public String getRealmFromAnnotations(Class<?> clazz) {
-        if (Component.class.isAssignableFrom(clazz)) {
+        if (Component.class.isAssignableFrom(clazz)
+                || ApplicationContext.class.isAssignableFrom(clazz)
+        ) {
             return "singleton";
         }
         Annotation[] annotations;
@@ -52,6 +59,18 @@ public class SpringEngine extends DefaultEngine {
             return "singleton";
         }
         return super.getRealmFromAnnotations(clazz);
+    }
+
+    @Override
+    public void enqueObjects(BiConsumer<Object, String> consumer) {
+        ApplicationContext context = ContextListener.getContext();
+        if (context instanceof ConfigurableApplicationContext) {
+            ConfigurableListableBeanFactory clbf = ((ConfigurableApplicationContext) context).getBeanFactory();
+            for (String singletonName : clbf.getSingletonNames()) {
+                Object singleton = clbf.getSingleton(singletonName);
+                consumer.accept(singleton, "singleton");
+            }
+        }
     }
 
     @Override

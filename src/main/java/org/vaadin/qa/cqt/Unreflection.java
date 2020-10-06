@@ -3,6 +3,7 @@ package org.vaadin.qa.cqt;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Vector;
@@ -16,6 +17,7 @@ public final class Unreflection {
      */
     private static final MethodHandles.Lookup LOOKUP_TRUSTED;
     private static final MethodHandle GET_DECLARED_FIELDS;
+    private static final MethodHandle GET_DECLARED_CONSTRUCTORS;
     private static final MethodHandle GET_DECLARED_FIELD;
     private static final MethodHandle GET_DECLARED_METHOD;
 
@@ -28,6 +30,7 @@ public final class Unreflection {
             LOOKUP_TRUSTED = (MethodHandles.Lookup) lookup.get(null);
 
             GET_DECLARED_FIELDS = lookupAll().findVirtual(Class.class, "getDeclaredFields", MethodType.methodType(Field[].class));
+            GET_DECLARED_CONSTRUCTORS = lookupAll().findVirtual(Class.class, "getDeclaredConstructors", MethodType.methodType(Constructor[].class));
             GET_DECLARED_FIELD = lookupAll().findVirtual(Class.class, "getDeclaredField", MethodType.methodType(Field.class, String.class));
             GET_DECLARED_METHOD = lookupAll().findVirtual(Class.class, "getDeclaredMethod", MethodType.methodType(Method.class, String.class, Class[].class));
         } catch (IllegalAccessException | IllegalArgumentException | NoSuchFieldException | SecurityException | NoSuchMethodException e) {
@@ -73,6 +76,16 @@ public final class Unreflection {
             return new Field[0];
         } catch (Throwable e) {
             throw new UnsupportedOperationException("Cannot get getDeclaredFields of " + clazz.getName(), e);
+        }
+    }
+
+    public static Constructor<?>[] getDeclaredConstructors(Class<?> clazz) {
+        try {
+            return (Constructor<?>[]) GET_DECLARED_CONSTRUCTORS.bindTo(clazz).invokeWithArguments();
+        } catch (NoClassDefFoundError e) {
+            return new Constructor<?>[0];
+        } catch (Throwable e) {
+            throw new UnsupportedOperationException("Cannot get getDeclaredConstructors of " + clazz.getName(), e);
         }
     }
 

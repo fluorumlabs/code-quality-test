@@ -22,6 +22,7 @@ public class VaadinEngine extends ServletEngine {
     public String getRealmFromAnnotations(Class<?> clazz) {
         if (VaadinService.class.isAssignableFrom(clazz)
                 || RequestHandler.class.isAssignableFrom(clazz)
+                || VaadinContext.class.isAssignableFrom(clazz)
         ) {
             return "singleton";
         }

@@ -5,6 +5,8 @@ import org.vaadin.qa.cqt.ReferenceType;
 import org.vaadin.qa.cqt.Suite;
 import org.vaadin.qa.cqt.annotations.*;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.text.Format;
 import java.util.Calendar;
@@ -36,79 +38,75 @@ public final class FieldInspections extends Suite {
                         isNotPrimitive(),
                         isNot(Serializable.class)
                 ),
-                target(Objects::nonNull)
+                target(Objects::nonNull),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE),
+                ownerType(hasMethod("writeObject", ObjectOutputStream.class).negate())
         );
     }
 
-    /**
-     * Having non-private setters for fields makes class/service stateful and allows the state to be mutated externally.
-     * This opens up possibilities for race conditions that are hard to trace.
-     *
-     * @return
-     */
-    @Warning("Non-final field exposed via non-private setter")
-    @Scopes({"static", "singleton", "session"})
-    public Predicate<Reference> exposedSetterNonFinal() {
+    @ProbableError("Transient field is not initialized after deserialization")
+    @Scopes(exclude = "static")
+    public Predicate<Reference> transientFieldNotInitialized() {
         return and(
                 field(
-                        isNotFinal(),
-                        setter(isNotPrivate())
+                        isNotStatic(),
+                        isTransient(),
+                        declaringClass(is(Serializable.class)),
+                        modifiedByNonConstructor().negate().or(isFinal())
                 ),
-                backreference(
-                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
-                )
+                ownerType(hasMethod("readObject", ObjectInputStream.class).negate())
         );
     }
 
     /**
-     * Having non-private fields allows the state to be mutated externally.
-     * This opens up possibilities for race conditions that are hard to trace.
+     * Non-final fields make service stateful and allow the state to be mutated externally.
      *
-     * @return
-     */
-    @Warning("Non-final non-private field")
-    @Scopes({"static", "singleton", "session"})
-    public Predicate<Reference> exposedNonFinal() {
-        return and(
-                field(
-                        isNotFinal(),
-                        isNotPrivate()
-                ),
-                backreference(
-                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
-                )
-        );
-    }
-
-    /**
      * Care must be taken to properly initialize fields of static, singleton- and session-scoped objects.
      * Consider using double-checked locking following SafeLocalDCL (http://hg.openjdk.java.net/code-tools/jcstress/file/9270b927e00f/tests-custom/src/main/java/org/openjdk/jcstress/tests/singletons/SafeLocalDCL.java#l71), or
      * UnsageLocalDCL (http://hg.openjdk.java.net/code-tools/jcstress/file/9270b927e00f/tests-custom/src/main/java/org/openjdk/jcstress/tests/singletons/UnsafeLocalDCL.java#l71).
+     *
      * See: https://github.com/code-review-checklists/java-concurrency#safe-local-dcl
      *
      * @return
      */
-    @Advice("Non-final field: check for correct initialization and synchronization")
+    @Warning("Non-final instance field can be modified: stateful shared object")
     @Scopes({"static", "singleton", "session"})
     public Predicate<Reference> nonFinal() {
-        return or(
-                field(
-                        isStatic(),
-                        isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
-                        isNotFinal(),
-                        isNotTransient(),
-                        type(isNotPrivateClass(), isNot(String.class)),
-                        declaringClass(isNotSyntheticClass()),
-                        modifiedByNonClassInit()
-                ),
+        return and(
                 field(
                         isNotStatic(),
                         isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
                         isNotFinal(),
                         isNotTransient(),
-                        type(isNotPrivateClass(), isNot(String.class)),
                         declaringClass(isNotSyntheticClass()),
                         modifiedByNonConstructor()
+                                .or(isUpdatedInOtherClasses())
+                ),
+                ownerType(isNotAnnotatedWith("org.springframework.boot.context.properties.ConfigurationProperties"))
+        );
+    }
+    /**
+     * Non-final static fields make class stateful and allow the state to be mutated externally.
+     *
+     * Care must be taken to properly initialize fields of static, singleton- and session-scoped objects.
+     * Consider using double-checked locking following SafeLocalDCL (http://hg.openjdk.java.net/code-tools/jcstress/file/9270b927e00f/tests-custom/src/main/java/org/openjdk/jcstress/tests/singletons/SafeLocalDCL.java#l71), or
+     * UnsageLocalDCL (http://hg.openjdk.java.net/code-tools/jcstress/file/9270b927e00f/tests-custom/src/main/java/org/openjdk/jcstress/tests/singletons/UnsafeLocalDCL.java#l71).
+     *
+     * See: https://github.com/code-review-checklists/java-concurrency#safe-local-dcl
+     *
+     * @return
+     */
+    @ProbableError("Static non-final instance field can be modified: stateful shared object")
+    @Scopes({"static", "singleton", "session"})
+    public Predicate<Reference> nonFinalStatic() {
+        return and(
+                field(
+                        isStatic(),
+                        isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value"),
+                        isNotFinal(),
+                        declaringClass(isNotSyntheticClass()),
+                        modifiedByNonClassInit()
+                                .or(isUpdatedInOtherClasses())
                 )
         );
     }

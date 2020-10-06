@@ -137,7 +137,7 @@ public class CallFinder {
         while (unroll.peek() != null) {
             String signature = unroll.poll();
             MethodNode methodNode = methodRefs.get(signature);
-            if (!Modifier.isPrivate(methodNode.access) || methodNode.name.startsWith("<")) {
+            if (ExposedMembers.isMethodExposed(classNode.name, methodNode.name, methodNode.desc) || methodNode.name.startsWith("<")) {
                 result.add(methodNode.name);
             }
             if (selfReferences.get(signature) != null) {

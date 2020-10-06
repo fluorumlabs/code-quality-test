@@ -2,10 +2,7 @@ package org.vaadin.qa.cqt.engine;
 
 import org.vaadin.qa.cqt.ScopeDetector;
 
-import javax.servlet.Filter;
-import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpSession;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -19,6 +16,9 @@ public class ServletEngine extends DefaultEngine {
     public String getRealmFromAnnotations(Class<?> clazz) {
         if (Servlet.class.isAssignableFrom(clazz)
                 || Filter.class.isAssignableFrom(clazz)
+                || ServletContext.class.isAssignableFrom(clazz)
+                || ServletContextListener.class.isAssignableFrom(clazz)
+                || ServletContainerInitializer.class.isAssignableFrom(clazz)
         ) {
             return "singleton";
         }
@@ -26,7 +26,8 @@ public class ServletEngine extends DefaultEngine {
             return "session";
         }
         if (ServletRequest.class.isAssignableFrom(clazz)
-                || ServletResponse.class.isAssignableFrom(clazz)) {
+                || ServletResponse.class.isAssignableFrom(clazz)
+        ) {
             return "request";
         }
 

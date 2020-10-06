@@ -21,13 +21,22 @@ public final class Classes {
     public static final Class<?> EMPTY_NAVIGABLE_MAP = Collections.emptyNavigableMap().getClass();
 
     public static final Class<?> UNMODIFIABLE_COLLECTION = getInnerClass(Collections.class, "UnmodifiableCollection");
+    public static final Class<?> UNMODIFIABLE_LIST = getInnerClass(Collections.class, "UnmodifiableList");
     public static final Class<?> UNMODIFIABLE_SET = getInnerClass(Collections.class, "UnmodifiableSet");
+    public static final Class<?> UNMODIFIABLE_SORTED_SET = getInnerClass(Collections.class, "UnmodifiableSortedSet");
+    public static final Class<?> UNMODIFIABLE_NAVIGABLE_SET = getInnerClass(Collections.class, "UnmodifiableNavigableSet");
     public static final Class<?> UNMODIFIABLE_MAP = getInnerClass(Collections.class, "UnmodifiableMap");
+    public static final Class<?> UNMODIFIABLE_SORTED_MAP = getInnerClass(Collections.class, "UnmodifiableSortedMap");
+    public static final Class<?> UNMODIFIABLE_NAVIGABLE_MAP = getInnerClass(Collections.class, "UnmodifiableNavigableMap");
 
-    public static final Class<?> SYNCHRONIZED_SET = getInnerClass(Collections.class, "SynchronizedSet");
-    public static final Class<?> SYNCHRONIZED_LIST = getInnerClass(Collections.class, "SynchronizedList");
     public static final Class<?> SYNCHRONIZED_COLLECTION = getInnerClass(Collections.class, "SynchronizedCollection");
+    public static final Class<?> SYNCHRONIZED_LIST = getInnerClass(Collections.class, "SynchronizedList");
+    public static final Class<?> SYNCHRONIZED_SET = getInnerClass(Collections.class, "SynchronizedSet");
+    public static final Class<?> SYNCHRONIZED_SORTED_SET = getInnerClass(Collections.class, "SynchronizedSortedSet");
+    public static final Class<?> SYNCHRONIZED_NAVIGABLE_SET = getInnerClass(Collections.class, "SynchronizedNavigableSet");
     public static final Class<?> SYNCHRONIZED_MAP = getInnerClass(Collections.class, "SynchronizedMap");
+    public static final Class<?> SYNCHRONIZED_SORTED_MAP = getInnerClass(Collections.class, "SynchronizedSortedMap");
+    public static final Class<?> SYNCHRONIZED_NAVIGABLE_MAP = getInnerClass(Collections.class, "SynchronizedNavigableMap");
     public static final Class<?> SET_FROM_MAP = getInnerClass(Collections.class, "SetFromMap");
 
     public static final Class<?> SINGLETON = Collections.singleton(DUMMY_ENUM.WHATEVER).getClass();

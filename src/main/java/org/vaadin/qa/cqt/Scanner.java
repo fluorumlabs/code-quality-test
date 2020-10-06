@@ -6,10 +6,9 @@ import org.vaadin.qa.cqt.suites.Classes;
 
 import javax.annotation.Nullable;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,15 +17,19 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static org.vaadin.qa.cqt.Unreflection.lookupAll;
+
 /**
  * Created by Artem Godin on 9/23/2020.
  */
 public class Scanner {
-    private static final long DISPLAY_INTERVAL = TimeUnit.MILLISECONDS.toNanos(100);
+    private static final long DISPLAY_INTERVAL = TimeUnit.MILLISECONDS.toNanos(300);
 
     private final Queue<Object> scannerQueue = new ArrayDeque<>();
     private final Map<Object, ObjectData> visitedObjects = new IdentityHashMap<>();
     private final Map<Object, List<Reference>> backreferences = new IdentityHashMap<>();
+    private final Map<String, Map<String, Set<PossibleValue>>> computedPotentialValues = new HashMap<>();
+    private final Queue<Class<?>> classes = new ArrayDeque<>();
     private final Predicate<Class<?>> filter;
     private final List<Inspection> inspections = new ArrayList<>();
     private PrintWriter output;
@@ -173,19 +176,28 @@ public class Scanner {
     public void clear() {
         visitedObjects.clear();
         backreferences.clear();
+        classes.clear();
     }
 
     public void visit(Object someObject) {
-        output.println("visiting: " + StringEscapeUtils.escapeHtml4(Objects.toString(someObject)));
-        scannerQueue.add(someObject);
+        Object unwrapped = unwrap(someObject);
+        output.println("visiting: " + StringEscapeUtils.escapeHtml4(Objects.toString(unwrapped)));
+        scannerQueue.add(unwrapped);
         processQueue();
+    }
+
+    public void visitEngine() {
+        output.println("loading system objects");
+        EngineInstance.get().enqueObjects((o, s) -> visitObject(unwrap(o), s));
     }
 
     public void visitClassLoaders() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         while (classLoader != null) {
             output.println("class loader: " + StringEscapeUtils.escapeHtml4(Objects.toString(classLoader)));
-            list(classLoader).forEach(scannerQueue::add);
+            list(classLoader).forEach(e -> {
+                scannerQueue.add(e);
+            });
             classLoader = classLoader.getParent();
         }
         output.println();
@@ -196,12 +208,13 @@ public class Scanner {
         output.println("<div class='container'>");
         long stamp = System.nanoTime() - DISPLAY_INTERVAL;
         int before = visitedObjects.size();
+        int prevCandidates = -1;
         Object objectToVisit = scannerQueue.poll();
         while (objectToVisit != null) {
             long now = System.nanoTime();
             long diff = now - stamp;
             if (diff >= DISPLAY_INTERVAL) {
-                output.println("<div class='frame'>instance: " + (visitedObjects.size() - before) + "</div>");
+                output.println("<div class='frame'>candidates: " + (visitedObjects.size() - before) + " (" + scannerQueue.size() + ")" + "</div>");
                 stamp = now;
             }
             if (objectToVisit instanceof Class) {
@@ -210,11 +223,14 @@ public class Scanner {
                 if (!visitedObjects.containsKey(objectToVisit.getClass())) {
                     visitClass(objectToVisit.getClass());
                 }
-                visitObject(objectToVisit);
+                visitObject(objectToVisit, null);
             }
             objectToVisit = scannerQueue.poll();
         }
         propagateScopes();
+        for (Class<?> aClass : classes) {
+            new ExposedMembers(aClass).collect();
+        }
         output.println("</div>");
     }
 
@@ -251,7 +267,9 @@ public class Scanner {
                             scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).decrementAndGet();
                             other.setInheritedScope(objectData.getScope());
                             scopeStats.computeIfAbsent(other.getScope(), s -> new AtomicInteger(0)).incrementAndGet();
-                            propagationQueue.add(objectValue.getValue());
+                            if (objectValue.getValue() != null) {
+                                propagationQueue.add(objectValue.getValue());
+                            }
                         }
                     }
                 }
@@ -273,6 +291,11 @@ public class Scanner {
             return;
         }
 
+        classes.add(objectToVisit);
+
+        String className = objectToVisit.getName();
+        computedPotentialValues.computeIfAbsent(className, cn -> new PossibleValues(objectToVisit).findPossibleValues());
+
         if (objectToVisit.getSuperclass() != null && !visitedObjects.containsKey(objectToVisit.getSuperclass()) && !shouldIgnore(objectToVisit.getSuperclass())) {
             scannerQueue.add(objectToVisit.getSuperclass());
         }
@@ -283,42 +306,55 @@ public class Scanner {
         for (Field field : Unreflection.getDeclaredFields(objectToVisit)) {
             if (Modifier.isStatic(field.getModifiers())
                     && !(field.isSynthetic() && "$assertionsDisabled".equals(field.getName()))) {
+                Set<PossibleValue> possibleFieldValues = Optional.ofNullable(computedPotentialValues.get(field.getDeclaringClass().getName()))
+                        .map(map -> map.get(field.getName()))
+                        .orElse(new HashSet<>(Collections.emptySet()));
                 try {
                     field.setAccessible(true);
                     Object value = field.get(null);
-                    processFieldValue(objectToVisit, objectData, field, value);
-                } catch (Exception e) {
+                    if (value != null || possibleFieldValues.isEmpty()) {
+                        processFieldValue(objectToVisit, objectData, field, value);
+                    }
+                    if (value != null) {
+                        possibleFieldValues.remove(new PossibleValue(value.getClass(), field.getDeclaringClass()));
+                    }
+                } catch (Throwable e) {
                     // ignore and skip
+                }
+
+                for (PossibleValue possibleValue : possibleFieldValues) {
+                    ObjectValue objectValue = new ObjectValue(ReferenceType.POSSIBLE_VALUE, field, possibleValue);
+                    objectData.addValue(objectValue);
                 }
             }
         }
     }
 
-    private void visitObject(Object objectToVisit) {
+    private void visitObject(Object objectToVisit, String context) {
         Class<?> visitingClass = objectToVisit.getClass();
         if (shouldIgnore(visitingClass)) {
             // Deliberately skip primitives and self
             return;
         }
-        Optional<String> detectedScope = ScopeDetector.detect(visitingClass);
+        if (visitedObjects.containsKey(objectToVisit)) {
+            return;
+        }
+        Optional<String> detectedScope = context != null ? Optional.of(context) : ScopeDetector.detect(visitingClass);
         ObjectData objectData = new ObjectData(detectedScope.orElse(null));
         visitedObjects.put(objectToVisit, objectData);
-        Object unwrappedObject = unwrap(objectToVisit);
-        if (unwrappedObject != objectToVisit && !shouldIgnore(unwrappedObject.getClass()) && shouldCascade(unwrappedObject.getClass())) {
-            scannerQueue.add(unwrappedObject);
-        }
 
         if (visitingClass.isArray() && !shouldIgnore(visitingClass.getComponentType())) {
             for (Object value : (Object[]) objectToVisit) {
                 if (value != null) {
-                    ObjectValue objectValue = new ObjectValue(ReferenceType.ARRAY_ITEM, value);
+                    Object unwrapped = unwrap(value);
+                    ObjectValue objectValue = new ObjectValue(ReferenceType.ARRAY_ITEM, unwrapped);
                     objectData.addValue(objectValue);
-                    if (!shouldIgnore(value.getClass())) {
-                        backreferences.computeIfAbsent(value, v -> new ArrayList<>())
+                    if (!shouldIgnore(unwrapped.getClass())) {
+                        backreferences.computeIfAbsent(unwrapped, v -> new ArrayList<>())
                                 .add(Reference.from(objectToVisit, objectValue, this));
                     }
-                    if (!visitedObjects.containsKey(value) && shouldCascade(value.getClass())) {
-                        scannerQueue.add(value);
+                    if (!visitedObjects.containsKey(unwrapped) && shouldCascade(unwrapped.getClass())) {
+                        scannerQueue.add(unwrapped);
                     }
                 }
             }
@@ -326,12 +362,26 @@ public class Scanner {
             while (!Object.class.equals(visitingClass)) {
                 for (Field field : Unreflection.getDeclaredFields(visitingClass)) {
                     if (!Modifier.isStatic(field.getModifiers())) {
+                        Set<PossibleValue> possibleFieldValues = Optional.ofNullable(computedPotentialValues.get(field.getDeclaringClass().getName()))
+                                .map(map -> map.get(field.getName()))
+                                .orElse(new HashSet<>(Collections.emptySet()));
+
                         try {
                             field.setAccessible(true);
                             Object value = field.get(objectToVisit);
-                            processFieldValue(objectToVisit, objectData, field, value);
-                        } catch (Exception e) {
+                            if (value != null || possibleFieldValues.isEmpty()) {
+                                processFieldValue(objectToVisit, objectData, field, value);
+                            }
+                            if (value != null) {
+                                possibleFieldValues.remove(new PossibleValue(value.getClass(), field.getDeclaringClass()));
+                            }
+                        } catch (Throwable e) {
                             // ignore and skip
+                        }
+
+                        for (PossibleValue possibleValue : possibleFieldValues) {
+                            ObjectValue objectValue = new ObjectValue(ReferenceType.POSSIBLE_VALUE, field, possibleValue);
+                            objectData.addValue(objectValue);
                         }
                     }
                 }
@@ -438,15 +488,16 @@ public class Scanner {
     }
 
     private ObjectValue pushValue(Object objectToVisit, ObjectData objectData, Field field, ReferenceType name, Object value, boolean cascade) {
-        ObjectValue objectValue = new ObjectValue(name, field, value);
+        Object unwrapped = unwrap(value);
+        ObjectValue objectValue = new ObjectValue(name, field, unwrapped);
         objectData.addValue(objectValue);
-        if (value != null) {
-            if (!shouldIgnore(value.getClass())) {
-                backreferences.computeIfAbsent(value, v -> new ArrayList<>())
+        if (unwrapped != null) {
+            if (!shouldIgnore(unwrapped.getClass())) {
+                backreferences.computeIfAbsent(unwrapped, v -> new ArrayList<>())
                         .add(Reference.from(objectToVisit, objectValue, this));
             }
-            if (cascade && !visitedObjects.containsKey(value) && shouldCascade(value.getClass())) {
-                scannerQueue.add(value);
+            if (cascade && !visitedObjects.containsKey(unwrapped) && shouldCascade(unwrapped.getClass())) {
+                scannerQueue.add(unwrapped);
             }
         }
         return objectValue;
@@ -458,5 +509,24 @@ public class Scanner {
 
     public void setMaxReferences(int maxReferences) {
         this.maxReferences = maxReferences;
+    }
+
+    private Object createUnitializedInstance(Class<?> clazz) {
+        if (!shouldIgnore(clazz)) {
+
+            // Get first constructor (don't care which one).
+            // This is needed to get otherwise not accessible DirectMethodHandle.Constructor class,
+            // and, therefore, call allocate instances without direct calls to sun.misc.Unsafe
+            try {
+                Constructor<?>[] declaredConstructors = Unreflection.getDeclaredConstructors(clazz);
+                if (declaredConstructors.length > 0) {
+                    MethodHandle anyConstructor = lookupAll().unreflectConstructor(declaredConstructors[0]);
+                    return lookupAll().findStatic(anyConstructor.getClass(), "allocateInstance", MethodType.methodType(Object.class, Object.class)).invoke(anyConstructor);
+                }
+            } catch (Throwable e) {
+                // ignore
+            }
+        }
+        return null;
     }
 }

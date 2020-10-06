@@ -78,12 +78,7 @@ public class CollectionInspections extends Suite {
 
     private Predicate<Reference> exposedOrModified() {
         return or(
-                and(
-                        field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
-                        backreference(
-                                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate()))))
-                        )
-                ),
+                fieldIsExposedForReading(),
                 field(
                         isStatic(),
                         type(is(Map.class)),
@@ -107,6 +102,7 @@ public class CollectionInspections extends Suite {
         );
     }
 
+
     /**
      * @return
      */
@@ -123,7 +119,7 @@ public class CollectionInspections extends Suite {
                 ),
                 field(isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value")),
                 target(Objects::nonNull),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE),
                 exposedOrModified()
         );
     }
@@ -141,7 +137,7 @@ public class CollectionInspections extends Suite {
                 ),
                 field(isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value")),
                 target(Objects::nonNull),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE),
                 exposedOrModified()
         );
     }
@@ -159,7 +155,7 @@ public class CollectionInspections extends Suite {
                 )),
                 field(isNotAnnotatedWith("org.springframework.beans.factory.annotation.Value")),
                 target(Objects::isNull),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE),
                 exposedOrModified()
         );
     }
@@ -184,7 +180,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(ConcurrentSkipListMap.class)),
                 field(type(isNot(ConcurrentMap.class))),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -202,7 +198,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(ConcurrentHashMap.class)),
                 field(type(isNot(ConcurrentHashMap.class))),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -215,7 +211,7 @@ public class CollectionInspections extends Suite {
     public Predicate<Reference> chmForHashtable() {
         return and(
                 targetType(isExactly(Hashtable.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -229,7 +225,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_MAP)),
                 underlyingMap(is(HashMap.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -251,7 +247,7 @@ public class CollectionInspections extends Suite {
                         genericType(0, is(Class.class)),
                         genericType(1, clazz -> getScanner().isInScope(clazz))
                 ),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -267,7 +263,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_MAP)),
                 underlyingMap(is(TreeMap.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -281,7 +277,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_SET)),
                 underlyingCollection(is(HashSet.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -295,7 +291,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_SET)),
                 underlyingCollection(is(TreeSet.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -309,7 +305,7 @@ public class CollectionInspections extends Suite {
         return and(
                 targetType(is(Classes.SYNCHRONIZED_LIST)),
                 underlyingCollection(is(ArrayList.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -322,7 +318,7 @@ public class CollectionInspections extends Suite {
     public Predicate<Reference> cowalForVector() {
         return and(
                 targetType(is(Vector.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -335,7 +331,7 @@ public class CollectionInspections extends Suite {
     public Predicate<Reference> clqForLinkedBlockingQueue() {
         return and(
                 targetType(is(LinkedBlockingQueue.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -348,7 +344,7 @@ public class CollectionInspections extends Suite {
     public Predicate<Reference> cldForLinkedBlockingQueue() {
         return and(
                 targetType(is(LinkedBlockingDeque.class)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -363,7 +359,7 @@ public class CollectionInspections extends Suite {
                         genericType(0, isEnum())
                 ),
                 targetType(isNot(EnumMap.class), isNot(THREAD_SAFE_COLLECTIONS), isNot(UNMODIFIABLE_COLLECTIONS)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -378,7 +374,7 @@ public class CollectionInspections extends Suite {
                         genericType(0, isEnum())
                 ),
                 targetType(isNot(EnumSet.class), isNot(THREAD_SAFE_COLLECTIONS), isNot(UNMODIFIABLE_COLLECTIONS)),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -391,8 +387,8 @@ public class CollectionInspections extends Suite {
         return and(
                 ownerType(isNotPrivateClass()),
                 targetType(is(Collection.class, Map.class), isNot(UNMODIFIABLE_COLLECTIONS)),
-                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                fieldIsExposedForReading(),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 
@@ -405,8 +401,8 @@ public class CollectionInspections extends Suite {
         return and(
                 ownerType(isNotPrivateClass()),
                 targetType(isArray()),
-                field(isNotPrivate()).or(fieldIsExposedViaGetter().and(field(getter(isNotPrivate())))),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE)
+                fieldIsExposedForReading(),
+                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
 

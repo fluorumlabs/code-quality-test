@@ -69,7 +69,7 @@ public final class ResourceInspections extends Suite {
                                 field(type(isNot(WeakReference.class, SoftReference.class)))
                         ),
                         and(
-                                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.MAP_VALUE),
+                                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE, ReferenceType.MAP_VALUE),
                                 ownerType(isNot(Annotation.class))
                         )
                 )
@@ -103,7 +103,7 @@ public final class ResourceInspections extends Suite {
                                 field(type(isNot(WeakReference.class, SoftReference.class)))
                         ),
                         and(
-                                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.MAP_VALUE),
+                                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE, ReferenceType.MAP_VALUE),
                                 ownerType(isNot(Annotation.class))
                         )
                 )

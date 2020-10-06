@@ -1,6 +1,7 @@
 package org.vaadin.qa.cqt.engine;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Created by Artem Godin on 9/28/2020.
@@ -22,6 +23,10 @@ public abstract class Engine {
     public abstract String getName();
 
     public abstract List<String> getContextOrder();
+
+    public void enqueObjects(BiConsumer<Object, String> consumer) {
+
+    }
 
     public boolean shouldPropagateContext(String currentContext, String newContext) {
         List<String> contextOrder = getContextOrder();

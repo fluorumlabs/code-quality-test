@@ -5,6 +5,7 @@ package org.vaadin.qa.cqt;
  */
 public enum ReferenceType {
     ACTUAL_VALUE(""),
+    POSSIBLE_VALUE(""),
     THREAD_LOCAL("<thread local>"),
     WAITING_THREAD_LOCAL("<thread local (waiting)>"),
     TERMINATED_THREAD_LOCAL("<thread local (terminated)>"),

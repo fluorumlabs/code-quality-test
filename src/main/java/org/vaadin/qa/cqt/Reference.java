@@ -22,6 +22,7 @@ public final class Reference {
     private static final Pattern LT_PATTERN = Pattern.compile("&lt;", Pattern.LITERAL);
     private static final Pattern GT_PATTERN = Pattern.compile("&gt;", Pattern.LITERAL);
     private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile("<span class=\"class\"></span>", Pattern.LITERAL);
+    private static final Pattern METHOD_ARG_CLASS_PATTERN = Pattern.compile("(\\{([^}]+)})");
     private static final Pattern INNER_CLASS_PATTERN = Pattern.compile("(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
 
     private static final HtmlFormatter SCOPE_FORMAT = value().escapeHtml().styled("scope");
@@ -47,7 +48,9 @@ public final class Reference {
     private static final HtmlFormatter STRING_VALUE_FORMAT = value().removeNewLines().escapeJava().wrapWith("\"").trimTo(240).escapeHtml().styled("value string");
     private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value().escapeHtml().styled("value primitive");
     private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value().removeNewLines().trimTo(240).escapeHtml().styled("value");
-    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().escapeHtml().styled("value default");
+    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().styled("value default");
+    private static final HtmlFormatter POSSIBLE_VALUE_FORMAT = value().styled("value possible");
+    private static final HtmlFormatter METHOD_VALUE_FORMAT = value().escapeHtml().replace(METHOD_ARG_CLASS_PATTERN, "<span class='class'>$2</span>");
     @Nullable
     private final Object target;
     @Nullable
@@ -73,7 +76,9 @@ public final class Reference {
 
     public static Reference from(Object owner, ObjectValue value, Scanner scanner) {
         Object targetValue = value.getValue();
-        Class<?> targetClass = targetValue == null ? null : targetValue.getClass();
+        Class<?> targetClass = (value.getReferenceType()==ReferenceType.POSSIBLE_VALUE && value.getValue() instanceof PossibleValue)
+                ? ((PossibleValue) value.getValue()).getType()
+                : (targetValue == null ? null : targetValue.getClass());
         Class<?> ownerClass;
         if (value.getField() != null) {
             ownerClass = value.getField().getDeclaringClass();
@@ -88,21 +93,6 @@ public final class Reference {
                 scanner.getData(owner),
                 value.getReferenceType(),
                 value.getField(),
-                scanner
-        );
-    }
-
-    public static Reference from(Object owner, Scanner scanner) {
-        Class<?> ownerClass;
-        ownerClass = owner instanceof Class ? (Class<?>) owner : owner.getClass();
-        return new Reference(
-                owner instanceof Class ? null : owner,
-                ownerClass,
-                owner instanceof Class ? null : owner,
-                ownerClass,
-                scanner.getData(owner),
-                ReferenceType.ACTUAL_VALUE,
-                null,
                 scanner
         );
     }
@@ -146,6 +136,21 @@ public final class Reference {
         }
 
         return className + GENERIC_ARGUMENTS_FORMAT.format(sb);
+    }
+
+    public static String formatRawClassName(Class<?> clazz) {
+        if (clazz.isArray()) {
+            return formatRawClassName(clazz.getComponentType()) + "[]";
+        }
+
+        Deque<String> classParts = new LinkedList<>();
+        Class<?> currentClass = clazz;
+        while (currentClass != null) {
+            classParts.addFirst(currentClass.getSimpleName());
+            currentClass = currentClass.getDeclaringClass();
+        }
+
+        return  (clazz.getPackage() == null ? "" : clazz.getPackage().getName() + ".") + String.join(".", classParts);
     }
 
     public static String formatShortClassName(Class<?> clazz) {
@@ -277,6 +282,12 @@ public final class Reference {
     public String formatValue() {
         if (target == null) {
             return NULL_VALUE_FORMAT.format("null");
+        }
+        if (target instanceof PossibleValue) {
+            String methods = ((PossibleValue) target).getMethods().stream()
+                    .map(m -> formatShortClassName(((PossibleValue) target).getOwner()) + "." + METHOD_VALUE_FORMAT.format(m))
+                    .collect(Collectors.joining(", "));
+            return TYPEHINT_VALUE_FORMAT.format("Possible " + formatShortClassName(targetClass)) + " " + POSSIBLE_VALUE_FORMAT.format("see " + methods);
         }
         String formatted;
         if (target instanceof String) {

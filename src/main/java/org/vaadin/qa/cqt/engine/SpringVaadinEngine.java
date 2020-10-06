@@ -2,6 +2,7 @@ package org.vaadin.qa.cqt.engine;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.*;
+import org.vaadin.qa.cqt.ScopeDetector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ public class SpringVaadinEngine extends SpringServletEngine {
     public String getRealmFromAnnotations(Class<?> clazz) {
         if (VaadinService.class.isAssignableFrom(clazz)
                 || RequestHandler.class.isAssignableFrom(clazz)
+                || VaadinContext.class.isAssignableFrom(clazz)
         ) {
             return "singleton";
         }

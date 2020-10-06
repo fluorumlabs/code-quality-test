@@ -9,10 +9,7 @@ import org.vaadin.qa.cqt.predicates.MemberPredicates;
 import org.vaadin.qa.cqt.predicates.TypePredicates;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -179,6 +176,42 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
         };
     }
 
+    public Predicate<Field> isReadInOtherClasses() {
+        return ExposedMembers::isFieldExposedForReading;
+    }
+
+    public Predicate<Field> isUpdatedInOtherClasses() {
+        return ExposedMembers::isFieldExposedForWriting;
+    }
+
+    public Predicate<Method> isCalledFromOtherClasses() {
+        return ExposedMembers::isMethodExposed;
+    }
+
+    public Predicate<Reference> fieldIsExposedForReading() {
+        return field(
+                isReadInOtherClasses().or(isPublic()).or(isProtected())
+        ).or(
+                fieldIsExposedViaGetter().and(
+                        field(getter(
+                                isCalledFromOtherClasses().or(isPublic()).or(isProtected())
+                                )
+                        )
+                )
+        );
+    }
+
+    public Predicate<Reference> fieldIsExposedForWriting() {
+        return field(
+                isUpdatedInOtherClasses().or(isPublic()).or(isProtected())
+        ).or(
+                field(setter(
+                        isCalledFromOtherClasses().or(isPublic()).or(isProtected())
+                        )
+                )
+        );
+    }
+
     public Predicate<Reference> fieldIsExposedViaGetter() {
         return reference -> {
             if (reference.getField() == null || reference.getOwner() == null) {
@@ -225,5 +258,16 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
 
     public Predicate<Reference> targetBackreference(Predicate<Reference>... referencePredicates) {
         return reference -> reference.getTarget() != null && scanner.getBackreferences(reference.getTarget()).stream().anyMatch(and(referencePredicates));
+    }
+
+    public Predicate<Class<?>> hasMethod(String name, Class<?>... args) {
+        return cz -> {
+            try {
+                Unreflection.getDeclaredMethod(cz, name, args);
+                return true;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
+        };
     }
 }
