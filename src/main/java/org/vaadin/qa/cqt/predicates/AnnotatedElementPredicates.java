@@ -22,8 +22,7 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (String aClass : classes) {
-                    if (Engine
-                            .getClass(aClass)
+                    if (Engine.getClass(aClass)
                             .isAssignableFrom(annotation.annotationType())) {
                         return true;
                     }
@@ -64,8 +63,7 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (String aClass : classes) {
-                    if (Engine
-                            .getClass(aClass)
+                    if (Engine.getClass(aClass)
                             .isAssignableFrom(annotation.annotationType())) {
                         return false;
                     }

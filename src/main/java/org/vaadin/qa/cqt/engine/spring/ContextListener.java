@@ -10,6 +10,8 @@ import org.springframework.context.event.ApplicationContextEvent;
 public class ContextListener
         implements ApplicationListener<ApplicationContextEvent> {
 
+    private static ApplicationContext context;
+
     /**
      * Gets Spring {@code ApplicationContext}.
      *
@@ -24,7 +26,5 @@ public class ContextListener
     public void onApplicationEvent(ApplicationContextEvent event) {
         context = event.getApplicationContext();
     }
-
-    private static ApplicationContext context;
 
 }

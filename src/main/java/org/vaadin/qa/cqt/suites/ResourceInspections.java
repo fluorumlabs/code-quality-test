@@ -45,11 +45,13 @@ public final class ResourceInspections extends Suite {
         return and(targetType(is(ClassLoader.class)), field(isStatic()), or(and(
                 referenceTypeIs(ReferenceType.MAP_KEY),
                 field(type(isNot(WeakHashMap.class)))
-        ), and(referenceTypeIs(ReferenceType.REFERENCE_VALUE),
-               field(type(isNot(WeakReference.class, SoftReference.class)))
-        ), and(referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                               ReferenceType.POSSIBLE_VALUE,
-                               ReferenceType.MAP_VALUE
+        ), and(
+                referenceTypeIs(ReferenceType.REFERENCE_VALUE),
+                field(type(isNot(WeakReference.class, SoftReference.class)))
+        ), and(referenceTypeIs(
+                ReferenceType.ACTUAL_VALUE,
+                ReferenceType.POSSIBLE_VALUE,
+                ReferenceType.MAP_VALUE
         ), ownerType(isNot(Annotation.class)))));
     }
 
@@ -67,18 +69,19 @@ public final class ResourceInspections extends Suite {
     @Warning("Holding strong references to Class")
     @Scopes({"static", "singleton"})
     public Predicate<Reference> classReference() {
-        return and(targetType(is(Class.class),
-                              clazz -> !clazz
-                                      .getPackage()
-                                      .getName()
-                                      .startsWith("java.")
-        ), field(isStatic()), or(and(referenceTypeIs(ReferenceType.MAP_KEY),
-                                     field(type(isNot(WeakHashMap.class)))
-        ), and(referenceTypeIs(ReferenceType.REFERENCE_VALUE),
-               field(type(isNot(WeakReference.class, SoftReference.class)))
-        ), and(referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                               ReferenceType.POSSIBLE_VALUE,
-                               ReferenceType.MAP_VALUE
+        return and(targetType(
+                is(Class.class),
+                clazz -> !clazz.getPackage().getName().startsWith("java.")
+        ), field(isStatic()), or(and(
+                referenceTypeIs(ReferenceType.MAP_KEY),
+                field(type(isNot(WeakHashMap.class)))
+        ), and(
+                referenceTypeIs(ReferenceType.REFERENCE_VALUE),
+                field(type(isNot(WeakReference.class, SoftReference.class)))
+        ), and(referenceTypeIs(
+                ReferenceType.ACTUAL_VALUE,
+                ReferenceType.POSSIBLE_VALUE,
+                ReferenceType.MAP_VALUE
         ), ownerType(isNot(Annotation.class)))));
     }
 
@@ -94,8 +97,9 @@ public final class ResourceInspections extends Suite {
     @Warning(
             "Store ExecutorService in fields of type ExecutorService or more specific")
     public Predicate<Reference> executorServiceFieldType() {
-        return and(targetType(is(ExecutorService.class)),
-                   field(type(is(ExecutorService.class)), isNotStatic())
+        return and(
+                targetType(is(ExecutorService.class)),
+                field(type(is(ExecutorService.class)), isNotStatic())
         );
     }
 
@@ -108,8 +112,9 @@ public final class ResourceInspections extends Suite {
      */
     @ProbableError("ThreadLocal value is not removed after work is done")
     public Predicate<Reference> nonCleanThreadLocal() {
-        return and(referenceTypeIs(ReferenceType.WAITING_THREAD_LOCAL,
-                                   ReferenceType.TERMINATED_THREAD_LOCAL
+        return and(referenceTypeIs(
+                ReferenceType.WAITING_THREAD_LOCAL,
+                ReferenceType.TERMINATED_THREAD_LOCAL
         ), target(Objects::nonNull));
     }
 
@@ -155,16 +160,17 @@ public final class ResourceInspections extends Suite {
      */
     @Advice("Use a ForkJoinPool instead of a ThreadPoolExecutor with N threads")
     public Predicate<Reference> useForkJoinPool() {
-        return and(targetType(is(ThreadPoolExecutor.class)),
-                   target(Objects::nonNull),
-                   target(o -> {
-                       if (o instanceof ThreadPoolExecutor) {
-                           ThreadPoolExecutor tpe = (ThreadPoolExecutor) o;
-                           return tpe.getCorePoolSize()
-                                   == tpe.getMaximumPoolSize();
-                       }
-                       return false;
-                   })
+        return and(
+                targetType(is(ThreadPoolExecutor.class)),
+                target(Objects::nonNull),
+                target(o -> {
+                    if (o instanceof ThreadPoolExecutor) {
+                        ThreadPoolExecutor tpe = (ThreadPoolExecutor) o;
+                        return tpe.getCorePoolSize()
+                                == tpe.getMaximumPoolSize();
+                    }
+                    return false;
+                })
         );
     }
 

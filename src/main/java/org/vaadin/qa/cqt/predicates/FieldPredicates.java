@@ -96,8 +96,7 @@ public interface FieldPredicates {
             String getter = (boolean.class.equals(field.getType())
                                      || Boolean.class.equals(field.getType())
                              ? "is"
-                             : "get") + name
-                    .substring(0, 1)
+                             : "get") + name.substring(0, 1)
                     .toUpperCase(Locale.ENGLISH) + name.substring(1);
             try {
                 return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(),
@@ -164,8 +163,7 @@ public interface FieldPredicates {
     default Predicate<Field> setter(Predicate<Method> rule) {
         return field -> {
             String name = field.getName();
-            String setter = "set" + name
-                    .substring(0, 1)
+            String setter = "set" + name.substring(0, 1)
                     .toUpperCase(Locale.ENGLISH) + name.substring(1);
             try {
                 return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(),

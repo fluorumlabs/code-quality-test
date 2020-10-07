@@ -10,6 +10,38 @@ import java.lang.reflect.Field;
  */
 public class ObjectValue {
 
+    @Nullable
+    private final Field field;
+
+    private final ReferenceType referenceType;
+
+    private final Object value;
+
+    /**
+     * Instantiate a new object value not linked to field
+     *
+     * @param referenceType the reference type
+     * @param value         the value
+     */
+    ObjectValue(ReferenceType referenceType, Object value) {
+        this.referenceType = referenceType;
+        this.field         = null;
+        this.value         = value;
+    }
+
+    /**
+     * Instantiate a new object value linked to field
+     *
+     * @param referenceType the reference type
+     * @param field         the field
+     * @param value         the value
+     */
+    ObjectValue(ReferenceType referenceType, Field field, Object value) {
+        this.referenceType = referenceType;
+        this.field         = field;
+        this.value         = value;
+    }
+
     /**
      * Get field.
      *
@@ -37,37 +69,5 @@ public class ObjectValue {
     public Object getValue() {
         return value;
     }
-
-    /**
-     * Instantiate a new object value not linked to field
-     *
-     * @param referenceType the reference type
-     * @param value         the value
-     */
-    ObjectValue(ReferenceType referenceType, Object value) {
-        this.referenceType = referenceType;
-        this.field         = null;
-        this.value         = value;
-    }
-
-    /**
-     * Instantiate a new object value linked to field
-     *
-     * @param referenceType the reference type
-     * @param field         the field
-     * @param value         the value
-     */
-    ObjectValue(ReferenceType referenceType, Field field, Object value) {
-        this.referenceType = referenceType;
-        this.field         = field;
-        this.value         = value;
-    }
-
-    @Nullable
-    private final Field field;
-
-    private final ReferenceType referenceType;
-
-    private final Object value;
 
 }

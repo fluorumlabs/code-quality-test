@@ -16,8 +16,7 @@ public abstract class Engine {
      */
     public static Class<?> getClass(String name) {
         try {
-            ClassLoader classLoader = Thread
-                    .currentThread()
+            ClassLoader classLoader = Thread.currentThread()
                     .getContextClassLoader();
             return classLoader.loadClass(name);
         } catch (Throwable e) {

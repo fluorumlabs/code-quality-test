@@ -7,32 +7,17 @@ package org.vaadin.qa.cqt.engine;
  */
 public final class EngineInstance {
 
-    /**
-     * Get {@link Engine} instance.
-     *
-     * @return the {@link Engine} instance
-     */
-    public static Engine get() {
-        return engine;
-    }
-
     private static final Engine engine;
 
     static {
-        boolean hasServlet = !void.class
-                .getName()
+        boolean hasServlet = !void.class.getName()
                 .equals(Engine.getClass("javax.servlet.Servlet").getName());
-        boolean hasVaadin = !void.class
-                .getName()
-                .equals(Engine
-                                .getClass("com.vaadin.flow.server.VaadinService")
+        boolean hasVaadin = !void.class.getName()
+                .equals(Engine.getClass("com.vaadin.flow.server.VaadinService")
                                 .getName());
-        boolean hasSpring = !void.class
-                .getName()
-                .equals(Engine
-                                .getClass(
-                                        "org.springframework.stereotype.Component")
-                                .getName());
+        boolean hasSpring = !void.class.getName()
+                .equals(Engine.getClass(
+                        "org.springframework.stereotype.Component").getName());
 
         if (hasSpring) {
             if (hasVaadin) {
@@ -54,5 +39,14 @@ public final class EngineInstance {
     }
 
     private EngineInstance() {}
+
+    /**
+     * Get {@link Engine} instance.
+     *
+     * @return the {@link Engine} instance
+     */
+    public static Engine get() {
+        return engine;
+    }
 
 }

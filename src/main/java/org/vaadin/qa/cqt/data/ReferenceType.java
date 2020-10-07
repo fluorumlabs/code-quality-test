@@ -59,14 +59,14 @@ public enum ReferenceType {
      */
     MAP_VALUE("<map value>");
 
-    @Override
-    public String toString() {
-        return title;
-    }
-
     private final String title;
 
     ReferenceType(String title) {
         this.title = title;
+    }
+
+    @Override
+    public String toString() {
+        return title;
     }
 }

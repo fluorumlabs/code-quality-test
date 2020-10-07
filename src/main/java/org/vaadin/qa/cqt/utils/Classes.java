@@ -29,8 +29,7 @@ public final class Classes {
     /**
      * Class of Collections.emptyList().
      */
-    public static final Class<?> EMPTY_LIST = Collections
-            .emptyList()
+    public static final Class<?> EMPTY_LIST = Collections.emptyList()
             .getClass();
 
     /**
@@ -41,15 +40,13 @@ public final class Classes {
     /**
      * Class of Collections.emptyNavigableMap().
      */
-    public static final Class<?> EMPTY_NAVIGABLE_MAP = Collections
-            .emptyNavigableMap()
+    public static final Class<?> EMPTY_NAVIGABLE_MAP = Collections.emptyNavigableMap()
             .getClass();
 
     /**
      * Class of Collections.emptyNavigableSet().
      */
-    public static final Class<?> EMPTY_NAVIGABLE_SET = Collections
-            .emptyNavigableSet()
+    public static final Class<?> EMPTY_NAVIGABLE_SET = Collections.emptyNavigableSet()
             .getClass();
 
     /**
@@ -60,15 +57,13 @@ public final class Classes {
     /**
      * Class of Collections.emptySortedMap().
      */
-    public static final Class<?> EMPTY_SORTED_MAP = Collections
-            .emptySortedMap()
+    public static final Class<?> EMPTY_SORTED_MAP = Collections.emptySortedMap()
             .getClass();
 
     /**
      * Class of Collections.emptySortedSet().
      */
-    public static final Class<?> EMPTY_SORTED_SET = Collections
-            .emptySortedSet()
+    public static final Class<?> EMPTY_SORTED_SET = Collections.emptySortedSet()
             .getClass();
 
     /**
@@ -81,23 +76,21 @@ public final class Classes {
     /**
      * Class of Collections.singleton().
      */
-    public static final Class<?> SINGLETON = Collections
-            .singleton(DUMMY_ENUM.WHATEVER)
+    public static final Class<?> SINGLETON = Collections.singleton(DUMMY_ENUM.WHATEVER)
             .getClass();
 
     /**
      * Class of Collections.singletonList().
      */
-    public static final Class<?> SINGLETON_LIST = Collections
-            .singletonList(DUMMY_ENUM.WHATEVER)
-            .getClass();
+    public static final Class<?> SINGLETON_LIST = Collections.singletonList(
+            DUMMY_ENUM.WHATEVER).getClass();
 
     /**
      * Class of Collections.singletonMap().
      */
-    public static final Class<?> SINGLETON_MAP = Collections
-            .singletonMap(DUMMY_ENUM.WHATEVER, DUMMY_ENUM.WHATEVER)
-            .getClass();
+    public static final Class<?> SINGLETON_MAP = Collections.singletonMap(DUMMY_ENUM.WHATEVER,
+                                                                          DUMMY_ENUM.WHATEVER
+    ).getClass();
 
     /**
      * Collections.SynchronizedCollection.class.
@@ -109,14 +102,18 @@ public final class Classes {
     /**
      * Collections.SynchronizedList.class.
      */
-    public static final Class<?> SYNCHRONIZED_LIST
-            = getInnerClass(Collections.class, "SynchronizedList");
+    public static final Class<?> SYNCHRONIZED_LIST = getInnerClass(
+            Collections.class,
+            "SynchronizedList"
+    );
 
     /**
      * Collections.SynchronizedMap.class.
      */
-    public static final Class<?> SYNCHRONIZED_MAP
-            = getInnerClass(Collections.class, "SynchronizedMap");
+    public static final Class<?> SYNCHRONIZED_MAP = getInnerClass(
+            Collections.class,
+            "SynchronizedMap"
+    );
 
     /**
      * Collections.SynchronizedNavigableMap.class.
@@ -135,8 +132,10 @@ public final class Classes {
     /**
      * Collections.SynchronizedSet.class.
      */
-    public static final Class<?> SYNCHRONIZED_SET
-            = getInnerClass(Collections.class, "SynchronizedSet");
+    public static final Class<?> SYNCHRONIZED_SET = getInnerClass(
+            Collections.class,
+            "SynchronizedSet"
+    );
 
     /**
      * Collections.SynchronizedSortedMap.class.
@@ -184,14 +183,18 @@ public final class Classes {
     /**
      * Collections.UnmodifiableList.class.
      */
-    public static final Class<?> UNMODIFIABLE_LIST
-            = getInnerClass(Collections.class, "UnmodifiableList");
+    public static final Class<?> UNMODIFIABLE_LIST = getInnerClass(
+            Collections.class,
+            "UnmodifiableList"
+    );
 
     /**
      * Collections.UnmodifiableMap.class.
      */
-    public static final Class<?> UNMODIFIABLE_MAP
-            = getInnerClass(Collections.class, "UnmodifiableMap");
+    public static final Class<?> UNMODIFIABLE_MAP = getInnerClass(
+            Collections.class,
+            "UnmodifiableMap"
+    );
 
     /**
      * Collections.UnmodifiableNavigableMap.class.
@@ -210,8 +213,10 @@ public final class Classes {
     /**
      * Collections.UnmodifiableSet.class.
      */
-    public static final Class<?> UNMODIFIABLE_SET
-            = getInnerClass(Collections.class, "UnmodifiableSet");
+    public static final Class<?> UNMODIFIABLE_SET = getInnerClass(
+            Collections.class,
+            "UnmodifiableSet"
+    );
 
     /**
      * Unmodifiable collections.
@@ -247,6 +252,9 @@ public final class Classes {
                                                                          "UnmodifiableSortedSet"
     );
 
+    private Classes() {
+    }
+
     private static Class<?> getInnerClass(Class<?> outer, String name) {
         for (Class<?> declaredClass : outer.getDeclaredClasses()) {
             if (name.equals(declaredClass.getSimpleName())) {
@@ -257,10 +265,6 @@ public final class Classes {
                                                    + name
                                                    + " in "
                                                    + outer.getName());
-    }
-
-
-    private Classes() {
     }
 
     private enum DUMMY_ENUM {

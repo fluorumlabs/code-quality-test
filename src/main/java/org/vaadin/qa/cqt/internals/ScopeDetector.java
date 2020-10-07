@@ -10,6 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class ScopeDetector {
 
+    private static final Map<Class<?>, String> scopeCache = new ConcurrentHashMap<>();
+
+    private ScopeDetector() {}
+
     /**
      * Decect scope for specified class
      *
@@ -19,8 +23,7 @@ public final class ScopeDetector {
     public static String detectScope(Class<?> clazz) {
         String result = scopeCache.get(clazz);
         if (result == null) {
-            if (clazz.isArray() || clazz.isPrimitive() || clazz
-                    .getName()
+            if (clazz.isArray() || clazz.isPrimitive() || clazz.getName()
                     .startsWith("java.lang.annotation.")) {
                 return "";
             }
@@ -39,10 +42,5 @@ public final class ScopeDetector {
     public static void hint(Class<?> clazz, String scope) {
         scopeCache.put(clazz, scope);
     }
-
-    private static final Map<Class<?>, String> scopeCache
-            = new ConcurrentHashMap<>();
-
-    private ScopeDetector() {}
 
 }

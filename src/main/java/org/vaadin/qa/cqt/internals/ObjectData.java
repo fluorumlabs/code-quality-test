@@ -9,6 +9,24 @@ import java.util.List;
  */
 public class ObjectData {
 
+    private final List<ObjectValue> objectValues;
+
+    @Nullable
+    private final String scope;
+
+    @Nullable
+    private String inheritedScope;
+
+    /**
+     * Instantiates a new object data.
+     *
+     * @param scope the scope
+     */
+    ObjectData(@Nullable String scope) {
+        this.scope        = scope;
+        this.objectValues = new ArrayList<>();
+    }
+
     /**
      * Add value associated with this object (see {@link ObjectValue}.
      *
@@ -80,23 +98,5 @@ public class ObjectData {
     public List<ObjectValue> getValues() {
         return objectValues;
     }
-
-    /**
-     * Instantiates a new object data.
-     *
-     * @param scope the scope
-     */
-    ObjectData(@Nullable String scope) {
-        this.scope        = scope;
-        this.objectValues = new ArrayList<>();
-    }
-
-    private final List<ObjectValue> objectValues;
-
-    @Nullable
-    private final String scope;
-
-    @Nullable
-    private String inheritedScope;
 
 }

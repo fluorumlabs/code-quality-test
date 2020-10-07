@@ -16,6 +16,100 @@ import static org.vaadin.qa.cqt.utils.Classes.*;
 @SuppressWarnings("unchecked")
 public class CollectionInspections extends Suite {
 
+    private static final String[] COLLECTION_MUTATION_METHODS = {
+            "add",
+            "remove",
+            "addAll",
+            "removeAll",
+            "removeIf",
+            "retainAll",
+            "clear"
+    };
+
+    private static final String[] MAP_MUTATION_METHODS = {
+            "put",
+            "remove",
+            "putAll",
+            "clear",
+            "replaceAll",
+            "putIfAbsent",
+            "replace",
+            "computeIfAbsent",
+            "computeIfPresent",
+            "compute",
+            "merge"
+    };
+
+    private static final Field UNDERLYING_COLLECTION_FIELD;
+
+    private static final Field UNDERLYING_MAP_FIELD;
+
+    private static final Field UNDERLYING_SET_FROM_MAP_FIELD;
+
+    static {
+        try {
+            UNDERLYING_MAP_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_MAP,
+                                                                 "m"
+            );
+            UNDERLYING_MAP_FIELD.setAccessible(true);
+            UNDERLYING_SET_FROM_MAP_FIELD = Unreflection.getDeclaredField(SET_FROM_MAP,
+                                                                          "m"
+            );
+            UNDERLYING_SET_FROM_MAP_FIELD.setAccessible(true);
+            UNDERLYING_COLLECTION_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_COLLECTION,
+                                                                        "c"
+            );
+            UNDERLYING_COLLECTION_FIELD.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            throw new UnsupportedOperationException(e);
+        }
+    }
+
+    private static Predicate<Reference> underlyingCollection(Predicate<Class<?>> predicate) {
+        return reference -> {
+            if (reference.getTarget() == null
+                    || !(SYNCHRONIZED_COLLECTION.isAssignableFrom(reference.getTargetClass()))) {
+                return false;
+            }
+            try {
+                Object map = UNDERLYING_COLLECTION_FIELD.get(reference.getTarget());
+                if (map != null) {
+                    return predicate.test(map.getClass());
+                }
+            } catch (IllegalAccessException e) {
+                // ignore
+            }
+            return false;
+        };
+    }
+
+    private static Predicate<Reference> underlyingMap(Predicate<Class<?>> predicate) {
+        return reference -> {
+            if (reference.getTarget() == null) {
+                return false;
+            }
+
+            Field field;
+            if (SYNCHRONIZED_MAP.isAssignableFrom(reference.getTargetClass())) {
+                field = UNDERLYING_MAP_FIELD;
+            } else if (SET_FROM_MAP.isAssignableFrom(reference.getTargetClass())) {
+                field = UNDERLYING_SET_FROM_MAP_FIELD;
+            } else {
+                return false;
+            }
+
+            try {
+                Object map = field.get(reference.getTarget());
+                if (map != null) {
+                    return predicate.test(map.getClass());
+                }
+            } catch (IllegalAccessException e) {
+                // ignore
+            }
+            return false;
+        };
+    }
+
     /**
      * ConcurrentHashMap (unlike the generic ConcurrentMap interface) guarantees that the lambdas passed into compute()-like methods are performed atomically per key, and the thread safety of the class may depend on that guarantee.
      * If used in conjunction with a static analysis rule that prohibits calling compute()-like methods on ConcurrentMap-typed objects that are not ConcurrentHashMaps it could prevent some bugs:
@@ -42,11 +136,10 @@ public class CollectionInspections extends Suite {
      */
     @Advice("Use non-blocking ConcurrentHashMap instead of Hashtable")
     public Predicate<Reference> chmForHashtable() {
-        return and(targetType(isExactly(Hashtable.class)),
-                   referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                                   ReferenceType.POSSIBLE_VALUE
-                   )
-        );
+        return and(targetType(isExactly(Hashtable.class)), referenceTypeIs(
+                ReferenceType.ACTUAL_VALUE,
+                ReferenceType.POSSIBLE_VALUE
+        ));
     }
 
     /**
@@ -86,11 +179,10 @@ public class CollectionInspections extends Suite {
      */
     @Advice("Use non-blocking ConcurrentLinkedDeque instead of LinkedBlockingDeque")
     public Predicate<Reference> cldForLinkedBlockingQueue() {
-        return and(targetType(is(LinkedBlockingDeque.class)),
-                   referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                                   ReferenceType.POSSIBLE_VALUE
-                   )
-        );
+        return and(targetType(is(LinkedBlockingDeque.class)), referenceTypeIs(
+                ReferenceType.ACTUAL_VALUE,
+                ReferenceType.POSSIBLE_VALUE
+        ));
     }
 
     /**
@@ -100,11 +192,10 @@ public class CollectionInspections extends Suite {
      */
     @Advice("Use non-blocking ConcurrentLinkedQueue instead of LinkedBlockingQueue")
     public Predicate<Reference> clqForLinkedBlockingQueue() {
-        return and(targetType(is(LinkedBlockingQueue.class)),
-                   referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                                   ReferenceType.POSSIBLE_VALUE
-                   )
-        );
+        return and(targetType(is(LinkedBlockingQueue.class)), referenceTypeIs(
+                ReferenceType.ACTUAL_VALUE,
+                ReferenceType.POSSIBLE_VALUE
+        ));
     }
 
     /**
@@ -210,11 +301,9 @@ public class CollectionInspections extends Suite {
                          genericType(1,
                                      clazz -> getScanner().matchesFilter(clazz)
                          )
-                   ),
-                   referenceTypeIs(ReferenceType.ACTUAL_VALUE,
-                                   ReferenceType.POSSIBLE_VALUE
-                   )
-        );
+        ), referenceTypeIs(ReferenceType.ACTUAL_VALUE,
+                           ReferenceType.POSSIBLE_VALUE
+        ));
     }
 
     /**
@@ -320,9 +409,8 @@ public class CollectionInspections extends Suite {
                 ownerType(isNotAnnotatedWith(
                         "org.springframework.boot.context.properties.ConfigurationProperties")),
                 targetType(is(SET_FROM_MAP)),
-                underlyingMap(isNot(THREAD_SAFE_COLLECTIONS)
-                                      .and(isNot(UNMODIFIABLE_COLLECTIONS))
-                                      .and(isNot(SET_FROM_MAP))),
+                underlyingMap(isNot(THREAD_SAFE_COLLECTIONS).and(isNot(
+                        UNMODIFIABLE_COLLECTIONS)).and(isNot(SET_FROM_MAP))),
                 field(isNotAnnotatedWith(
                         "org.springframework.beans.factory.annotation.Value")),
                 target(Objects::nonNull),
@@ -331,101 +419,6 @@ public class CollectionInspections extends Suite {
                 ),
                 exposedOrModified()
         );
-    }
-
-    private static final String[] COLLECTION_MUTATION_METHODS = {
-            "add",
-            "remove",
-            "addAll",
-            "removeAll",
-            "removeIf",
-            "retainAll",
-            "clear"
-    };
-
-    private static final String[] MAP_MUTATION_METHODS = {
-            "put",
-            "remove",
-            "putAll",
-            "clear",
-            "replaceAll",
-            "putIfAbsent",
-            "replace",
-            "computeIfAbsent",
-            "computeIfPresent",
-            "compute",
-            "merge"
-    };
-
-    private static final Field UNDERLYING_COLLECTION_FIELD;
-
-    private static final Field UNDERLYING_MAP_FIELD;
-
-    private static final Field UNDERLYING_SET_FROM_MAP_FIELD;
-
-    static {
-        try {
-            UNDERLYING_MAP_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_MAP,
-                                                                 "m"
-            );
-            UNDERLYING_MAP_FIELD.setAccessible(true);
-            UNDERLYING_SET_FROM_MAP_FIELD = Unreflection.getDeclaredField(SET_FROM_MAP,
-                                                                          "m"
-            );
-            UNDERLYING_SET_FROM_MAP_FIELD.setAccessible(true);
-            UNDERLYING_COLLECTION_FIELD = Unreflection.getDeclaredField(SYNCHRONIZED_COLLECTION,
-                                                                        "c"
-            );
-            UNDERLYING_COLLECTION_FIELD.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
-
-    private static Predicate<Reference> underlyingCollection(Predicate<Class<?>> predicate) {
-        return reference -> {
-            if (reference.getTarget() == null
-                    || !(SYNCHRONIZED_COLLECTION.isAssignableFrom(reference.getTargetClass()))) {
-                return false;
-            }
-            try {
-                Object map
-                        = UNDERLYING_COLLECTION_FIELD.get(reference.getTarget());
-                if (map != null) {
-                    return predicate.test(map.getClass());
-                }
-            } catch (IllegalAccessException e) {
-                // ignore
-            }
-            return false;
-        };
-    }
-
-    private static Predicate<Reference> underlyingMap(Predicate<Class<?>> predicate) {
-        return reference -> {
-            if (reference.getTarget() == null) {
-                return false;
-            }
-
-            Field field;
-            if (SYNCHRONIZED_MAP.isAssignableFrom(reference.getTargetClass())) {
-                field = UNDERLYING_MAP_FIELD;
-            } else if (SET_FROM_MAP.isAssignableFrom(reference.getTargetClass())) {
-                field = UNDERLYING_SET_FROM_MAP_FIELD;
-            } else {
-                return false;
-            }
-
-            try {
-                Object map = field.get(reference.getTarget());
-                if (map != null) {
-                    return predicate.test(map.getClass());
-                }
-            } catch (IllegalAccessException e) {
-                // ignore
-            }
-            return false;
-        };
     }
 
     private Predicate<Reference> exposedOrModified() {

@@ -22,6 +22,131 @@ import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
  */
 public final class Reference {
 
+    private static final HtmlFormatter CLASS_NAME_FORMAT = value().escapeHtml()
+            .styled("class");
+
+    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().styled(
+            "value default");
+
+    private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile("<span class=\"class\"></span>",
+                                                                       Pattern.LITERAL
+    );
+
+    private static final HtmlFormatter FIELD_NAME_FORMAT = value().escapeHtml()
+            .styled("field");
+
+    private static final HtmlFormatter GENERIC_ARGUMENTS_FORMAT = value().styled(
+            "generic");
+
+    private static final Pattern GT_PATTERN = Pattern.compile("&gt;",
+                                                              Pattern.LITERAL
+    );
+
+    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile(
+            "(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
+
+    private static final Pattern LT_PATTERN = Pattern.compile("&lt;",
+                                                              Pattern.LITERAL
+    );
+
+    private static final int MAX_CONTEXT_PATH_DEPTH = 10;
+
+    private static final Pattern METHOD_ARG_CLASS_PATTERN = Pattern.compile(
+            "(\\{([^}]+)})");
+
+    private static final HtmlFormatter METHOD_VALUE_FORMAT = value().escapeHtml()
+            .replace(METHOD_ARG_CLASS_PATTERN, "<span class='class'>$2</span>");
+
+    private static final HtmlFormatter NULL_VALUE_FORMAT = value().styled(
+            "value null");
+
+    private static final HtmlFormatter PACKAGE_NAME_FORMAT = value().escapeHtml()
+            .styled("class package");
+
+    private static final HtmlFormatter PARTIAL_FORMAT = value().styled("partial");
+
+    private static final HtmlFormatter POSSIBLE_VALUE_FORMAT = value().styled(
+            "value possible");
+
+    private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value().escapeHtml()
+            .styled("value primitive");
+
+    private static final HtmlFormatter REFERENCE_TYPE_FORMAT = value().escapeHtml()
+            .styled("reference");
+
+    private static final HtmlFormatter SCOPE_FORMAT = value().escapeHtml()
+            .styled("scope");
+
+    private static final Pattern SEPARATOR_PATTERN = Pattern.compile("(,\\s*)");
+
+    private static final HtmlFormatter STATIC_FORMAT = value().styled("static");
+
+    private static final HtmlFormatter STRING_VALUE_FORMAT = value().removeNewLines()
+            .escapeJava()
+            .wrapWith("\"")
+            .trimTo(240)
+            .escapeHtml()
+            .styled("value string");
+
+    private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value().removeNewLines()
+            .trimTo(240)
+            .escapeHtml()
+            .styled("value");
+
+    private static final HtmlFormatter TYPEHINT_VALUE_FORMAT = value().styled(
+            "typehint");
+
+    private static final HtmlFormatter TYPE_NAME_FORMAT = value().removePackages()
+            .escapeHtml()
+            .replace(INNER_CLASS_PATTERN, "$2.")
+            .replace(
+                    LT_PATTERN,
+                    "</span><span class=\"generic\">&lt;<span class=\"class\">"
+            )
+            .replace(GT_PATTERN, "</span>&gt;</span><span class=\"class\">")
+            .replace(SEPARATOR_PATTERN, "</span>$1<span class=\"class\">")
+            .styled("class")
+            .replace(EMPTY_CLASS_PATTERN, "");
+
+    private static final HtmlFormatter VISIBILITY_MODIFIER_FORMAT = value().styled(
+            "modifier");
+
+    @Nullable
+    private final Field field;
+
+    private final Object owner;
+
+    private final Class<?> ownerClass;
+
+    private final ObjectData ownerData;
+
+    private final ReferenceType referenceType;
+
+    private final Scanner scanner;
+
+    @Nullable
+    private final Object target;
+
+    private final Class<?> targetClass;
+
+    private Reference(@Nullable Object target,
+                      @Nullable Class<?> targetClass,
+                      Object owner,
+                      Class<?> ownerClass,
+                      ObjectData ownerData,
+                      ReferenceType referenceType,
+                      @Nullable Field field,
+                      Scanner scanner) {
+        this.target        = target;
+        this.targetClass   = targetClass;
+        this.owner         = owner;
+        this.ownerClass    = ownerClass;
+        this.ownerData     = ownerData;
+        this.referenceType = referenceType;
+        this.field         = field;
+        this.scanner       = scanner;
+    }
+
     /**
      * Format class name as HTML.
      *
@@ -70,6 +195,54 @@ public final class Reference {
         );
     }
 
+    private static String formatClassName(Class<?> clazz,
+                                          boolean includePackage) {
+        if (clazz.isArray()) {
+            return formatClassName(clazz.getComponentType(), includePackage)
+                    + REFERENCE_TYPE_FORMAT.format("[]");
+        }
+
+        Deque<String> classParts   = new LinkedList<>();
+        Class<?>      currentClass = clazz;
+        while (currentClass != null) {
+            classParts.addFirst(currentClass.getSimpleName());
+            currentClass = currentClass.getDeclaringClass();
+        }
+
+        String className;
+        if (includePackage) {
+            className = (clazz.getPackage() == null
+                         ? ""
+                         : PACKAGE_NAME_FORMAT.format(clazz.getPackage()
+                                                              .getName() + "."))
+                    + CLASS_NAME_FORMAT.format(String.join(".", classParts));
+        } else {
+            className = CLASS_NAME_FORMAT.format(String.join(".", classParts));
+        }
+
+        StringBuilder sb = new StringBuilder(64);
+
+        TypeVariable<?>[] typeparms = clazz.getTypeParameters();
+        if (typeparms.length > 0) {
+            boolean continued = false;
+            sb.append('<');
+            for (TypeVariable<?> typeparm : typeparms) {
+                if (continued) {
+                    sb.append(',');
+                }
+                sb.append(TYPE_NAME_FORMAT.format(typeparm.getTypeName()));
+                continued = true;
+            }
+            sb.append('>');
+        }
+
+        return className + GENERIC_ARGUMENTS_FORMAT.format(sb);
+    }
+
+    private static String formatShortClassName(Class<?> clazz) {
+        return formatClassName(clazz, false);
+    }
+
     /**
      * Format list of referencing fields as HTML.
      *
@@ -84,15 +257,13 @@ public final class Reference {
         String formattedField = formatField();
 
         for (Reference backreference : scanner.getBackreferences(target)) {
-            if (backreference.owner != owner || !backreference
-                    .formatField()
+            if (backreference.owner != owner || !backreference.formatField()
                     .equals(formattedField)) {
                 map.put(backreference, backreference.formatPartial());
             }
         }
 
-        return map
-                .entrySet()
+        return map.entrySet()
                 .stream()
                 .filter(ref -> ref.getKey().matchesFilter())
                 .map(e -> e.getKey().formatOwnerClass() + PARTIAL_FORMAT.format(
@@ -156,8 +327,7 @@ public final class Reference {
                 visitedObjects.put(reference.owner, true);
                 for (Reference backreference : scanner.getBackreferences(
                         reference.owner)) {
-                    if (backreference.hasOwnScope() && backreference
-                            .getScope()
+                    if (backreference.hasOwnScope() && backreference.getScope()
                             .equals(getScope())) {
                         return formatClassName(backreference.ownerClass)
                                 + PARTIAL_FORMAT.format(backreference.formatPartial()
@@ -192,8 +362,7 @@ public final class Reference {
             return NULL_VALUE_FORMAT.format("null");
         }
         if (target instanceof PossibleValue) {
-            String methods = ((PossibleValue) target)
-                    .getMethods()
+            String methods = ((PossibleValue) target).getMethods()
                     .stream()
                     .map(m -> formatShortClassName(((PossibleValue) target).getOwner())
                             + "."
@@ -239,6 +408,28 @@ public final class Reference {
         }
     }
 
+    private String formatPartial() {
+        if (field == null) {
+            return "";
+        } else {
+            String partial = FIELD_NAME_FORMAT.format(field.getName())
+                    + REFERENCE_TYPE_FORMAT.format(referenceType);
+            if (Modifier.isStatic(field.getModifiers())) {
+                return "." + STATIC_FORMAT.format(partial);
+            } else {
+                return "." + partial;
+            }
+        }
+    }
+
+    private boolean hasOwnScope() {
+        return ownerData != null && ownerData.hasOwnScope();
+    }
+
+    private boolean matchesFilter() {
+        return scanner.matchesFilter(ownerClass);
+    }
+
     /**
      * Gets field.
      *
@@ -258,15 +449,12 @@ public final class Reference {
         if (field == null) {
             return ownerClass.getTypeName();
         } else {
-            if (owner != null && !field
-                    .getDeclaringClass()
+            if (owner != null && !field.getDeclaringClass()
                     .getName()
                     .equals(owner.getClass().getName())) {
                 return owner.getClass().getTypeName()
                         + ": "
-                        + field
-                        .getDeclaringClass()
-                        .getTypeName()
+                        + field.getDeclaringClass().getTypeName()
                         + ": "
                         + getFieldModifiers()
                         + " "
@@ -351,205 +539,6 @@ public final class Reference {
         return targetClass;
     }
 
-    private static final HtmlFormatter CLASS_NAME_FORMAT = value()
-            .escapeHtml()
-            .styled("class");
-
-    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().styled(
-            "value default");
-
-    private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile("<span class=\"class\"></span>",
-                                                                       Pattern.LITERAL
-    );
-
-    private static final HtmlFormatter FIELD_NAME_FORMAT = value()
-            .escapeHtml()
-            .styled("field");
-
-    private static final HtmlFormatter GENERIC_ARGUMENTS_FORMAT
-            = value().styled("generic");
-
-    private static final Pattern GT_PATTERN = Pattern.compile("&gt;",
-                                                              Pattern.LITERAL
-    );
-
-    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile(
-            "(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
-
-    private static final Pattern LT_PATTERN = Pattern.compile("&lt;",
-                                                              Pattern.LITERAL
-    );
-
-    private static final int MAX_CONTEXT_PATH_DEPTH = 10;
-
-    private static final Pattern METHOD_ARG_CLASS_PATTERN = Pattern.compile(
-            "(\\{([^}]+)})");
-
-    private static final HtmlFormatter METHOD_VALUE_FORMAT = value()
-            .escapeHtml()
-            .replace(METHOD_ARG_CLASS_PATTERN, "<span class='class'>$2</span>");
-
-    private static final HtmlFormatter NULL_VALUE_FORMAT = value().styled(
-            "value null");
-
-    private static final HtmlFormatter PACKAGE_NAME_FORMAT = value()
-            .escapeHtml()
-            .styled("class package");
-
-    private static final HtmlFormatter PARTIAL_FORMAT
-            = value().styled("partial");
-
-    private static final HtmlFormatter POSSIBLE_VALUE_FORMAT = value().styled(
-            "value possible");
-
-    private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value()
-            .escapeHtml()
-            .styled("value primitive");
-
-    private static final HtmlFormatter REFERENCE_TYPE_FORMAT = value()
-            .escapeHtml()
-            .styled("reference");
-
-    private static final HtmlFormatter SCOPE_FORMAT = value()
-            .escapeHtml()
-            .styled("scope");
-
-    private static final Pattern SEPARATOR_PATTERN = Pattern.compile("(,\\s*)");
-
-    private static final HtmlFormatter STATIC_FORMAT = value().styled("static");
-
-    private static final HtmlFormatter STRING_VALUE_FORMAT = value()
-            .removeNewLines()
-            .escapeJava()
-            .wrapWith("\"")
-            .trimTo(240)
-            .escapeHtml()
-            .styled("value string");
-
-    private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value()
-            .removeNewLines()
-            .trimTo(240)
-            .escapeHtml()
-            .styled("value");
-
-    private static final HtmlFormatter TYPEHINT_VALUE_FORMAT = value().styled(
-            "typehint");
-
-    private static final HtmlFormatter TYPE_NAME_FORMAT = value()
-            .removePackages()
-            .escapeHtml()
-            .replace(INNER_CLASS_PATTERN, "$2.")
-            .replace(
-                    LT_PATTERN,
-                    "</span><span class=\"generic\">&lt;<span class=\"class\">"
-            )
-            .replace(GT_PATTERN, "</span>&gt;</span><span class=\"class\">")
-            .replace(SEPARATOR_PATTERN, "</span>$1<span class=\"class\">")
-            .styled("class")
-            .replace(EMPTY_CLASS_PATTERN, "");
-
-    private static final HtmlFormatter VISIBILITY_MODIFIER_FORMAT
-            = value().styled("modifier");
-
-    @Nullable
-    private final Field field;
-
-    private final Object owner;
-
-    private final Class<?> ownerClass;
-
-    private final ObjectData ownerData;
-
-    private final ReferenceType referenceType;
-
-    private final Scanner scanner;
-
-    @Nullable
-    private final Object target;
-
-    private final Class<?> targetClass;
-
-    private static String formatClassName(Class<?> clazz,
-                                          boolean includePackage) {
-        if (clazz.isArray()) {
-            return formatClassName(clazz.getComponentType(), includePackage)
-                    + REFERENCE_TYPE_FORMAT.format("[]");
-        }
-
-        Deque<String> classParts   = new LinkedList<>();
-        Class<?>      currentClass = clazz;
-        while (currentClass != null) {
-            classParts.addFirst(currentClass.getSimpleName());
-            currentClass = currentClass.getDeclaringClass();
-        }
-
-        String className;
-        if (includePackage) {
-            className = (clazz.getPackage() == null
-                         ? ""
-                         : PACKAGE_NAME_FORMAT.format(clazz
-                                                              .getPackage()
-                                                              .getName() + "."))
-                    + CLASS_NAME_FORMAT.format(String.join(".", classParts));
-        } else {
-            className = CLASS_NAME_FORMAT.format(String.join(".", classParts));
-        }
-
-        StringBuilder sb = new StringBuilder(64);
-
-        TypeVariable<?>[] typeparms = clazz.getTypeParameters();
-        if (typeparms.length > 0) {
-            boolean continued = false;
-            sb.append('<');
-            for (TypeVariable<?> typeparm : typeparms) {
-                if (continued) {
-                    sb.append(',');
-                }
-                sb.append(TYPE_NAME_FORMAT.format(typeparm.getTypeName()));
-                continued = true;
-            }
-            sb.append('>');
-        }
-
-        return className + GENERIC_ARGUMENTS_FORMAT.format(sb);
-    }
-
-    private static String formatShortClassName(Class<?> clazz) {
-        return formatClassName(clazz, false);
-    }
-
-    private Reference(@Nullable Object target,
-                      @Nullable Class<?> targetClass,
-                      Object owner,
-                      Class<?> ownerClass,
-                      ObjectData ownerData,
-                      ReferenceType referenceType,
-                      @Nullable Field field,
-                      Scanner scanner) {
-        this.target        = target;
-        this.targetClass   = targetClass;
-        this.owner         = owner;
-        this.ownerClass    = ownerClass;
-        this.ownerData     = ownerData;
-        this.referenceType = referenceType;
-        this.field         = field;
-        this.scanner       = scanner;
-    }
-
-    private String formatPartial() {
-        if (field == null) {
-            return "";
-        } else {
-            String partial = FIELD_NAME_FORMAT.format(field.getName())
-                    + REFERENCE_TYPE_FORMAT.format(referenceType);
-            if (Modifier.isStatic(field.getModifiers())) {
-                return "." + STATIC_FORMAT.format(partial);
-            } else {
-                return "." + partial;
-            }
-        }
-    }
-
     private String getFieldModifiers() {
         if (field == null) {
             return "";
@@ -562,14 +551,6 @@ public final class Reference {
             return "";
         }
         return field.getGenericType().getTypeName();
-    }
-
-    private boolean hasOwnScope() {
-        return ownerData != null && ownerData.hasOwnScope();
-    }
-
-    private boolean matchesFilter() {
-        return scanner.matchesFilter(ownerClass);
     }
 
 }

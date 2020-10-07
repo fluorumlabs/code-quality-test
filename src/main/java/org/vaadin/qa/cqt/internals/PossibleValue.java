@@ -9,6 +9,12 @@ import java.util.Objects;
  */
 public class PossibleValue {
 
+    private final List<String> methods;
+
+    private final Class<?> owner;
+
+    private final Class<?> type;
+
     /**
      * Instantiates a new possible value.
      *
@@ -73,11 +79,5 @@ public class PossibleValue {
     public Class<?> getType() {
         return type;
     }
-
-    private final List<String> methods;
-
-    private final Class<?> owner;
-
-    private final Class<?> type;
 
 }

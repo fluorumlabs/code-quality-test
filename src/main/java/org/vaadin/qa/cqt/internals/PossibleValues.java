@@ -20,6 +20,8 @@ import static jdk.internal.org.objectweb.asm.Type.*;
  */
 public class PossibleValues {
 
+    private final Class<?> clazz;
+
     /**
      * Instantiates a new possible value finder.
      *
@@ -29,27 +31,13 @@ public class PossibleValues {
         this.clazz = clazz;
     }
 
-    /**
-     * Find all possible field values
-     *
-     * @return the map of field name -> set of {@link PossibleValue}
-     */
-    public Map<String, Set<PossibleValue>> findPossibleValues() {
-        try {
-            return collectPossibleValues();
-        } catch (IOException | AnalyzerException e) {
-            // ignore
-        }
-        return Collections.emptyMap();
-    }
-
-    private final Class<?> clazz;
-
     private static String formatMethodName(MethodNode methodNode) {
-        return methodNode.name + "(" + Stream
-                .of(getArgumentTypes(methodNode.desc))
+        return methodNode.name
+                + "("
+                + Stream.of(getArgumentTypes(methodNode.desc))
                 .map(PossibleValues::getClassName)
-                .collect(Collectors.joining(", ")) + ")";
+                .collect(Collectors.joining(", "))
+                + ")";
     }
 
     private static String getClassName(Type type) {
@@ -82,8 +70,7 @@ public class PossibleValues {
             case OBJECT:
             default:
                 return "{"
-                        + type
-                        .getInternalName()
+                        + type.getInternalName()
                         .substring(type.getInternalName().lastIndexOf('/') + 1)
                         + "}";
         }
@@ -149,6 +136,20 @@ public class PossibleValues {
         return defaultValue;
     }
 
+    /**
+     * Find all possible field values
+     *
+     * @return the map of field name -> set of {@link PossibleValue}
+     */
+    public Map<String, Set<PossibleValue>> findPossibleValues() {
+        try {
+            return collectPossibleValues();
+        } catch (IOException | AnalyzerException e) {
+            // ignore
+        }
+        return Collections.emptyMap();
+    }
+
     private void addPossibleFieldValue(Map<String, Map<String, PossibleValue>> results,
                                        String fieldName,
                                        String fieldDesc,
@@ -160,18 +161,15 @@ public class PossibleValues {
             return;
         }
         try {
-            Class<?> potentialClass = Thread
-                    .currentThread()
+            Class<?> potentialClass = Thread.currentThread()
                     .getContextClassLoader()
                     .loadClass(desc);
             String methodName = formatMethodName(method);
 
             if (array) {
-                Class<?> arrayClass = Array
-                        .newInstance(potentialClass, 0)
+                Class<?> arrayClass = Array.newInstance(potentialClass, 0)
                         .getClass();
-                results
-                        .computeIfAbsent(fieldName, fn -> new HashMap<>())
+                results.computeIfAbsent(fieldName, fn -> new HashMap<>())
                         .computeIfAbsent(arrayClass.getName(),
                                          cn -> new PossibleValue(arrayClass,
                                                                  clazz
@@ -179,8 +177,7 @@ public class PossibleValues {
                         )
                         .addMethod(methodName);
             } else {
-                results
-                        .computeIfAbsent(fieldName, fn -> new HashMap<>())
+                results.computeIfAbsent(fieldName, fn -> new HashMap<>())
                         .computeIfAbsent(potentialClass.getName(),
                                          cn -> new PossibleValue(potentialClass,
                                                                  clazz
@@ -203,28 +200,26 @@ public class PossibleValues {
         cr.accept(classNode, 0);
 
         for (MethodNode method : classNode.methods) {
-            Analyzer<SourceValue> analyzer
-                    = new Analyzer<>(new SourceInterpreter());
+            Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
             analyzer.analyze(classNode.name, method);
 
-            AbstractInsnNode[] abstractInsnNodes
-                    = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
                     if ((insn.getOpcode() == Opcodes.PUTFIELD
                                  || insn.getOpcode() == Opcodes.PUTSTATIC)) {
-                        String fieldName = insn.name;
-                        String fieldDesc = getType(insn.desc).getClassName();
-                        boolean array = insn.desc.startsWith("[");
-                        Frame<SourceValue>[] frames  = analyzer.getFrames();
-                        Frame<SourceValue>   current = frames[i];
-                        SourceValue topValue
-                                = current.getStack(current.getStackSize() - 1);
+                        String               fieldName = insn.name;
+                        String               fieldDesc = getType(insn.desc).getClassName();
+                        boolean              array     = insn.desc.startsWith(
+                                "[");
+                        Frame<SourceValue>[] frames    = analyzer.getFrames();
+                        Frame<SourceValue>   current   = frames[i];
+                        SourceValue topValue = current.getStack(current.getStackSize()
+                                                                        - 1);
                         for (AbstractInsnNode abstractInsnNode : topValue.insns) {
                             if (abstractInsnNode instanceof TypeInsnNode) {
-                                String desc
-                                        = getObjectType(((TypeInsnNode) abstractInsnNode).desc)
+                                String desc = getObjectType(((TypeInsnNode) abstractInsnNode).desc)
                                         .getClassName();
                                 addPossibleFieldValue(results,
                                                       fieldName,
@@ -234,12 +229,10 @@ public class PossibleValues {
                                                       method
                                 );
                             } else if (abstractInsnNode instanceof MethodInsnNode) {
-                                String desc
-                                        = getType(((MethodInsnNode) abstractInsnNode).desc)
+                                String desc = getType(((MethodInsnNode) abstractInsnNode).desc)
                                         .getReturnType()
                                         .getClassName();
-                                String name
-                                        = ((MethodInsnNode) abstractInsnNode).name;
+                                String name = ((MethodInsnNode) abstractInsnNode).name;
                                 if (((MethodInsnNode) abstractInsnNode).owner.equals(
                                         getInternalName(Collections.class))) {
                                     desc = getCollectionsWrapperClass(name,
