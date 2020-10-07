@@ -8,6 +8,9 @@ import java.util.stream.Stream;
  */
 public final class PredicateUtils {
 
+    private PredicateUtils() {
+    }
+
     /**
      * Predicate and'ing all arguments.
      *
@@ -17,8 +20,7 @@ public final class PredicateUtils {
      * @return the predicate
      */
     public static <E, T extends Predicate<E>> T and(T... predicates) {
-        return Stream
-                .of(predicates)
+        return Stream.of(predicates)
                 .reduce((x, y) -> (T) x.and(y))
                 .orElseGet(PredicateUtils::alwaysTrue);
     }
@@ -32,8 +34,7 @@ public final class PredicateUtils {
      * @return the predicate
      */
     public static <E, T extends Predicate<E>> T or(T... predicates) {
-        return Stream
-                .of(predicates)
+        return Stream.of(predicates)
                 .reduce((x, y) -> (T) x.or(y))
                 .orElseGet(PredicateUtils::alwaysTrue);
     }
@@ -41,9 +42,6 @@ public final class PredicateUtils {
     private static <T extends Predicate<?>> T alwaysTrue() {
         Predicate<?> predicate = x -> true;
         return (T) predicate;
-    }
-
-    private PredicateUtils() {
     }
 
 }

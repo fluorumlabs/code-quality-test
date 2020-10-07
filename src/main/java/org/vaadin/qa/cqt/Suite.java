@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 public class Suite
         implements AnnotatedElementPredicates, FieldPredicates, TypePredicates, MemberPredicates {
 
+    private Scanner scanner;
+
     /**
      * AND predicate.
      *
@@ -49,8 +51,7 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> backreference(Predicate<Reference> referencePredicate) {
-        return reference -> scanner
-                .getBackreferences(reference.getOwner())
+        return reference -> scanner.getBackreferences(reference.getOwner())
                 .stream()
                 .anyMatch(referencePredicate);
     }
@@ -62,8 +63,7 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> backreference(Predicate<Reference>... referencePredicates) {
-        return reference -> scanner
-                .getBackreferences(reference.getOwner())
+        return reference -> scanner.getBackreferences(reference.getOwner())
                 .stream()
                 .anyMatch(and(referencePredicates));
     }
@@ -125,11 +125,9 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> fieldIsExposedForReading() {
-        return field(isReadInOtherClasses()
-                             .or(isPublic())
+        return field(isReadInOtherClasses().or(isPublic())
                              .or(isProtected())).or(fieldIsExposedViaGetter().and(
-                field(getter(isCalledFromOtherClasses()
-                                     .or(isPublic())
+                field(getter(isCalledFromOtherClasses().or(isPublic())
                                      .or(isProtected())))));
     }
 
@@ -147,8 +145,7 @@ public class Suite
      */
     public Predicate<Reference> fieldIsExposedForUpdating() {
         return field(isUpdatedInOtherClasses().or(isPublic()).or(isProtected()))
-                .or(field(setter(isCalledFromOtherClasses()
-                                         .or(isPublic())
+                .or(field(setter(isCalledFromOtherClasses().or(isPublic())
                                          .or(isProtected()))));
     }
 
@@ -349,8 +346,7 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIs(ReferenceType first) {
-        return reference -> EnumSet
-                .of(first)
+        return reference -> EnumSet.of(first)
                 .contains(reference.getReferenceType());
     }
 
@@ -363,8 +359,7 @@ public class Suite
      */
     public Predicate<Reference> referenceTypeIs(ReferenceType first,
                                                 ReferenceType... referenceTypes) {
-        return reference -> EnumSet
-                .of(first, referenceTypes)
+        return reference -> EnumSet.of(first, referenceTypes)
                 .contains(reference.getReferenceType());
     }
 
@@ -375,8 +370,7 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIsNot(ReferenceType first) {
-        return reference -> !EnumSet
-                .of(first)
+        return reference -> !EnumSet.of(first)
                 .contains(reference.getReferenceType());
     }
 
@@ -389,8 +383,7 @@ public class Suite
      */
     public Predicate<Reference> referenceTypeIsNot(ReferenceType first,
                                                    ReferenceType... referenceTypes) {
-        return reference -> !EnumSet
-                .of(first, referenceTypes)
+        return reference -> !EnumSet.of(first, referenceTypes)
                 .contains(reference.getReferenceType());
     }
 
@@ -400,6 +393,7 @@ public class Suite
      * @param scanner the scanner
      * @return the list
      */
+    @SuppressWarnings("unchecked")
     public List<Inspection> register(Scanner scanner) {
         this.scanner = scanner;
 
@@ -414,30 +408,25 @@ public class Suite
             if (method.getAnnotation(Disabled.class) != null) {
                 continue;
             }
-            Optional<Annotation> report = Arrays
-                    .stream(method.getDeclaredAnnotations())
-                    .filter(annotation -> annotation
-                            .annotationType()
+            Optional<Annotation> report = Arrays.stream(method.getDeclaredAnnotations())
+                    .filter(annotation -> annotation.annotationType()
                             .getAnnotation(Report.class) != null)
                     .findFirst();
             report.ifPresent(annotation -> {
-                Report reportAnnotation = annotation
-                        .annotationType()
+                Report reportAnnotation = annotation.annotationType()
                         .getAnnotation(Report.class);
-                Scopes scopes = method.getAnnotation(Scopes.class);
+                Scopes               scopes    = method.getAnnotation(Scopes.class);
                 Predicate<Reference> preFilter = null;
 
                 if (scopes != null && scopes.value().length > 0) {
-                    Optional<Predicate<Reference>> filter
-                            = Stream.of(scopes.value()).<Predicate<Reference>>map(
+                    Optional<Predicate<Reference>> filter = Stream.of(scopes.value()).<Predicate<Reference>>map(
                             scope -> (Reference reference) -> scope.equals(
                                     reference.getScope())).reduce(Predicate::or);
                     preFilter = filter.get();
                 }
 
                 if (scopes != null && scopes.exclude().length > 0) {
-                    Optional<Predicate<Reference>> filter
-                            = Stream.of(scopes.exclude()).<Predicate<Reference>>map(
+                    Optional<Predicate<Reference>> filter = Stream.of(scopes.exclude()).<Predicate<Reference>>map(
                             scope -> (Reference reference) -> !scope.equals(
                                     reference.getScope())).reduce(Predicate::and);
                     if (preFilter == null) {
@@ -448,13 +437,12 @@ public class Suite
                 }
 
                 try {
-                    Predicate<Reference> predicate
-                            = (Predicate<Reference>) method.invoke(this);
+                    Predicate<Reference> predicate = (Predicate<Reference>) method
+                            .invoke(this);
                     if (preFilter != null) {
                         predicate = preFilter.and(predicate);
                     }
-                    String message = (String) annotation
-                            .annotationType()
+                    String message = (String) annotation.annotationType()
                             .getMethod("value")
                             .invoke(annotation);
                     inspections.add(new Inspection(reportAnnotation.level(),
@@ -502,8 +490,8 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference> referencePredicate) {
-        return reference -> reference.getTarget() != null && scanner
-                .getBackreferences(reference.getTarget())
+        return reference -> reference.getTarget() != null
+                && scanner.getBackreferences(reference.getTarget())
                 .stream()
                 .anyMatch(referencePredicate);
     }
@@ -515,8 +503,8 @@ public class Suite
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference>... referencePredicates) {
-        return reference -> reference.getTarget() != null && scanner
-                .getBackreferences(reference.getTarget())
+        return reference -> reference.getTarget() != null
+                && scanner.getBackreferences(reference.getTarget())
                 .stream()
                 .anyMatch(and(referencePredicates));
     }
@@ -550,7 +538,5 @@ public class Suite
     public Scanner getScanner() {
         return scanner;
     }
-
-    private Scanner scanner;
 
 }

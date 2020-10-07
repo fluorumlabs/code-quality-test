@@ -9,6 +9,16 @@ import java.util.function.Predicate;
  */
 public class Inspection {
 
+    private final String category;
+
+    private final String id;
+
+    private final Level level;
+
+    private final String message;
+
+    private final Predicate<Reference> predicate;
+
     /**
      * Instantiate a new Inspection.
      *
@@ -74,15 +84,5 @@ public class Inspection {
     public Predicate<Reference> getPredicate() {
         return predicate;
     }
-
-    private final String category;
-
-    private final String id;
-
-    private final Level level;
-
-    private final String message;
-
-    private final Predicate<Reference> predicate;
 
 }

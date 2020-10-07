@@ -23,8 +23,7 @@ public interface HtmlFormatter extends Function<String, String> {
     /**
      * Pattern matching packages in class name.
      */
-    Pattern PACKAGE_PATTERN
-            = Pattern.compile("(\\b([a-z0-9])[a-z0-9_]*[.]\\b)");
+    Pattern PACKAGE_PATTERN = Pattern.compile("(\\b([a-z0-9])[a-z0-9_]*[.]\\b)");
 
     /**
      * Encode value string via {@link URLEncoder#encode(String, Charset)}.
@@ -107,8 +106,7 @@ public interface HtmlFormatter extends Function<String, String> {
         if (attributes.isEmpty()) {
             return decorate(tag);
         }
-        String attrs = attributes
-                .entrySet()
+        String attrs = attributes.entrySet()
                 .stream()
                 .map(entry -> String.join("",
                                           entry.getKey(),

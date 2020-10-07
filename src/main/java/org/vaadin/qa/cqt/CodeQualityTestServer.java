@@ -40,6 +40,22 @@ import java.util.stream.Stream;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CodeQualityTestServer {
 
+    private static final int DEFAULT_PORT = 8777;
+
+    private final List<Supplier<Object>> scanTargets = new ArrayList<>();
+
+    private final Map<Class<?>, String> scopeHints = new HashMap<>();
+
+    private final List<Supplier<Suite>> suites = new ArrayList<>();
+
+    private Path cqtIgnoreRoot = Paths.get("");
+
+    private Predicate<Class<?>> excludes = x -> false;
+
+    private Predicate<Class<?>> includes = x -> false;
+
+    private int port = DEFAULT_PORT;
+
     /**
      * Configure location of {@code .cqtignore} file
      *
@@ -91,8 +107,7 @@ public class CodeQualityTestServer {
      * @return the code quality test server
      */
     public CodeQualityTestServer excludePackages(String... strings) {
-        excludes
-                = excludes.or(Stream.of(strings).<Predicate<Class<?>>>map(p -> (clazz -> clazz
+        excludes = excludes.or(Stream.of(strings).<Predicate<Class<?>>>map(p -> (clazz -> clazz
                 .getName()
                 .startsWith(p))).reduce(Predicate::or).orElse(x -> true));
         return this;
@@ -116,8 +131,7 @@ public class CodeQualityTestServer {
      * @return the code quality test server
      */
     public CodeQualityTestServer includePackages(String... strings) {
-        includes
-                = includes.or(Stream.of(strings).<Predicate<Class<?>>>map(p -> (clazz -> clazz
+        includes = includes.or(Stream.of(strings).<Predicate<Class<?>>>map(p -> (clazz -> clazz
                 .getName()
                 .startsWith(p))).reduce(Predicate::or).orElse(x -> true));
         return this;
@@ -154,14 +168,16 @@ public class CodeQualityTestServer {
             System.setProperty("cqt-started", "true");
             scopeHints.forEach(ScopeDetector::hint);
             try {
-                HttpServer server
-                        = HttpServer.create(new InetSocketAddress(port), 0);
+                HttpServer server = HttpServer.create(
+                        new InetSocketAddress(port),
+                        0
+                );
                 server.createContext("/", new MyHandler());
                 server.setExecutor(Executors.newFixedThreadPool(5));
                 server.start();
-                String preamble = "Code Quality Test Server (" + EngineInstance
-                        .get()
-                        .getVersion() + ")";
+                String preamble = "Code Quality Test Server ("
+                        + EngineInstance.get().getVersion()
+                        + ")";
                 String banner = "Server running at http://localhost:" + port;
                 int    width  = Math.max(preamble.length(), banner.length());
                 String separator = new String(new char[width]).replace('\0',
@@ -210,23 +226,35 @@ public class CodeQualityTestServer {
         return this;
     }
 
-    private static final int DEFAULT_PORT = 8777;
-
-    private final List<Supplier<Object>> scanTargets = new ArrayList<>();
-
-    private final Map<Class<?>, String> scopeHints = new HashMap<>();
-
-    private final List<Supplier<Suite>> suites = new ArrayList<>();
-
-    private Path cqtIgnoreRoot = Paths.get("");
-
-    private Predicate<Class<?>> excludes = x -> false;
-
-    private Predicate<Class<?>> includes = x -> false;
-
-    private int port = DEFAULT_PORT;
-
     private final class MyHandler implements HttpHandler {
+
+        private final List<String> currentResults = new CopyOnWriteArrayList<>();
+
+        private final List<String> hiddenDescriptors = new CopyOnWriteArrayList<>();
+
+        private final List<String> previousResults = new CopyOnWriteArrayList<>();
+
+        private final Object resultLockObject = new Object();
+
+        private final AtomicBoolean resultsAreReady = new AtomicBoolean(false);
+
+        private final org.vaadin.qa.cqt.internals.Scanner scanner = new Scanner(
+                includes.and(excludes.negate()));
+
+        private final AtomicBoolean scannerIsRunning = new AtomicBoolean(false);
+
+        private volatile String lastScanDate = "";
+
+        private MyHandler() {
+            if (suites.isEmpty()) {
+                scanner.addSuite(CollectionInspections::new);
+                scanner.addSuite(LambdaInspections::new);
+                scanner.addSuite(ResourceInspections::new);
+                scanner.addSuite(FieldInspections::new);
+            } else {
+                suites.forEach(scanner::addSuite);
+            }
+        }
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -247,8 +275,7 @@ public class CodeQualityTestServer {
                                                       true
             )) {
                 output.println("<!DOCTYPE html><html><base href='.'>");
-                output.println("<title>CQT Server " + EngineInstance
-                        .get()
+                output.println("<title>CQT Server " + EngineInstance.get()
                         .getVersion() + "</title>");
                 output.println("<style>\n"
                                        + "    body {\n"
@@ -448,17 +475,16 @@ public class CodeQualityTestServer {
                             path = path.substring(0,
                                                   path.lastIndexOf("/suppress")
                             );
-                            String whatToDismiss = exchange
-                                    .getRequestURI()
+                            String whatToDismiss = exchange.getRequestURI()
                                     .getQuery()
                                     .replace('+', ' ')
                                     .trim();
                             if (whatToDismiss.endsWith("#")) {
-                                whatToDismiss = whatToDismiss
-                                        .substring(0,
-                                                   whatToDismiss.indexOf('#')
-                                        )
-                                        .trim();
+                                whatToDismiss = whatToDismiss.substring(0,
+                                                                        whatToDismiss
+                                                                                .indexOf(
+                                                                                        '#')
+                                ).trim();
                             }
                             appendDismissedReportDescriptor(whatToDismiss);
                         }
@@ -498,37 +524,6 @@ public class CodeQualityTestServer {
                 output.println("</body></html>");
             } catch (Exception e) {
                 e.printStackTrace();
-            }
-        }
-
-        private final List<String> currentResults
-                = new CopyOnWriteArrayList<>();
-
-        private final List<String> hiddenDescriptors
-                = new CopyOnWriteArrayList<>();
-
-        private final List<String> previousResults
-                = new CopyOnWriteArrayList<>();
-
-        private final Object resultLockObject = new Object();
-
-        private final AtomicBoolean resultsAreReady = new AtomicBoolean(false);
-
-        private final org.vaadin.qa.cqt.internals.Scanner scanner = new Scanner(
-                includes.and(excludes.negate()));
-
-        private final AtomicBoolean scannerIsRunning = new AtomicBoolean(false);
-
-        private volatile String lastScanDate = "";
-
-        private MyHandler() {
-            if (suites.isEmpty()) {
-                scanner.addSuite(CollectionInspections::new);
-                scanner.addSuite(LambdaInspections::new);
-                scanner.addSuite(ResourceInspections::new);
-                scanner.addSuite(FieldInspections::new);
-            } else {
-                suites.forEach(scanner::addSuite);
             }
         }
 
@@ -588,8 +583,7 @@ public class CodeQualityTestServer {
 
             if (!path.isEmpty()) {
                 try {
-                    Class<?> aClass = Thread
-                            .currentThread()
+                    Class<?> aClass = Thread.currentThread()
                             .getContextClassLoader()
                             .loadClass(path);
                     output.println(
@@ -619,8 +613,7 @@ public class CodeQualityTestServer {
                         }
                     }
 
-                    if (dismissed
-                            .stream()
+                    if (dismissed.stream()
                             .anyMatch(desc -> currentResult.contains(
                                     "<!-- Descriptor: "
                                             + HtmlFormatter.encodeValue(desc)
@@ -652,11 +645,10 @@ public class CodeQualityTestServer {
                 try (Stream<String> lines = Files.lines(cqtIgnore,
                                                         StandardCharsets.UTF_8
                 )) {
-                    return lines
-                            .map(s -> s.indexOf('#') >= 0 ? s.substring(0,
-                                                                        s.indexOf(
-                                                                                '#')
-                            ) : s)
+                    return lines.map(s -> s.indexOf('#') >= 0 ? s.substring(0,
+                                                                            s.indexOf(
+                                                                                    '#')
+                    ) : s)
                             .map(String::trim)
                             .filter(s -> !s.isEmpty())
                             .collect(Collectors.toSet());
@@ -696,11 +688,9 @@ public class CodeQualityTestServer {
 
                     // Copy prev/new results
 
-                    List<String> newReports = scanner
-                            .analyze()
+                    List<String> newReports = scanner.analyze()
                             .stream()
-                            .sorted(Comparator
-                                            .comparing(InspectionResult::getInspectionLevel)
+                            .sorted(Comparator.comparing(InspectionResult::getInspectionLevel)
                                             .reversed()
                                             .thenComparing(InspectionResult::getInspectionCategory)
                                             .thenComparing(InspectionResult::getInspectionMessage))
@@ -716,8 +706,7 @@ public class CodeQualityTestServer {
                         currentResults.addAll(newReports);
                     }
 
-                    LocalDateTime dateTime
-                            = LocalDateTime.now(); // Gets the current date and time
+                    LocalDateTime dateTime = LocalDateTime.now(); // Gets the current date and time
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
                             "dd-MM-yyyy HH:mm:ss");
                     lastScanDate = dateTime.format(formatter);

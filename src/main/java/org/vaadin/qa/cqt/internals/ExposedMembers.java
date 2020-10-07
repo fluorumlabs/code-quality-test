@@ -16,6 +16,23 @@ import java.util.Set;
  */
 public class ExposedMembers {
 
+    private static final Set<String> EXPOSED_METHODS = new HashSet<>();
+
+    private static final Set<String> EXPOSED_READING_FIELDS = new HashSet<>();
+
+    private static final Set<String> EXPOSED_WRITING_FIELDS = new HashSet<>();
+
+    private final Class<?> clazz;
+
+    /**
+     * Instantiates a new helper.
+     *
+     * @param clazz the class to scan
+     */
+    public ExposedMembers(Class<?> clazz) {
+        this.clazz = clazz;
+    }
+
     /**
      * Test if field is read from other classes.
      *
@@ -55,26 +72,6 @@ public class ExposedMembers {
     }
 
     /**
-     * Instantiates a new helper.
-     *
-     * @param clazz the class to scan
-     */
-    public ExposedMembers(Class<?> clazz) {
-        this.clazz = clazz;
-    }
-
-    /**
-     * Collect all fields/methods referenced from specified class.
-     */
-    public void collect() {
-        try {
-            collectExposedMembers();
-        } catch (IOException e) {
-            // ignore
-        }
-    }
-
-    /**
      * Test if field is read from other classes.
      *
      * @param owner the ASM internal name for class
@@ -108,13 +105,16 @@ public class ExposedMembers {
         return EXPOSED_METHODS.contains(owner + "." + method + desc);
     }
 
-    private static final Set<String> EXPOSED_METHODS = new HashSet<>();
-
-    private static final Set<String> EXPOSED_READING_FIELDS = new HashSet<>();
-
-    private static final Set<String> EXPOSED_WRITING_FIELDS = new HashSet<>();
-
-    private final Class<?> clazz;
+    /**
+     * Collect all fields/methods referenced from specified class.
+     */
+    public void collect() {
+        try {
+            collectExposedMembers();
+        } catch (IOException e) {
+            // ignore
+        }
+    }
 
     private void collectExposedMembers() throws IOException {
         ClassNode   classNode = new ClassNode();
@@ -122,8 +122,7 @@ public class ExposedMembers {
         cr.accept(classNode, 0);
 
         for (MethodNode method : classNode.methods) {
-            AbstractInsnNode[] abstractInsnNodes
-                    = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];

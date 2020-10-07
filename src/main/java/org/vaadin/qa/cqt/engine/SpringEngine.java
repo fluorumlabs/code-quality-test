@@ -24,8 +24,8 @@ public class SpringEngine extends DefaultEngine {
     public void addSystemObjects(BiConsumer<Object, String> consumer) {
         ApplicationContext context = ContextListener.getContext();
         if (context instanceof ConfigurableApplicationContext) {
-            ConfigurableListableBeanFactory clbf
-                    = ((ConfigurableApplicationContext) context).getBeanFactory();
+            ConfigurableListableBeanFactory clbf = ((ConfigurableApplicationContext) context)
+                    .getBeanFactory();
             for (String singletonName : clbf.getSingletonNames()) {
                 Object singleton = clbf.getSingleton(singletonName);
                 consumer.accept(singleton, "singleton");
@@ -47,8 +47,7 @@ public class SpringEngine extends DefaultEngine {
             return "";
         }
 
-        boolean isComponent = Arrays
-                .stream(annotations)
+        boolean isComponent = Arrays.stream(annotations)
                 .map(Annotation::annotationType)
                 .filter(cz -> !cz.getName().equals(clazz.getName()))
                 .map(ScopeDetector::detectScope)

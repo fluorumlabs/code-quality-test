@@ -19,6 +19,10 @@ import java.util.*;
  */
 public class ModificationFinder {
 
+    private final Class<?> clazz;
+
+    private final String fieldName;
+
     /**
      * Instantiates a new modification finder.
      *
@@ -46,10 +50,6 @@ public class ModificationFinder {
         return false;
     }
 
-    private final Class<?> clazz;
-
-    private final String fieldName;
-
     private Set<String> findModifyingMethods() throws
                                                IOException,
                                                AnalyzerException {
@@ -65,12 +65,10 @@ public class ModificationFinder {
             String signature = method.name + method.desc;
             methodRefs.put(method.name + method.desc, method);
 
-            Analyzer<SourceValue> analyzer
-                    = new Analyzer<>(new SourceInterpreter());
+            Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
             analyzer.analyze(classNode.name, method);
 
-            AbstractInsnNode[] abstractInsnNodes
-                    = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
@@ -85,31 +83,29 @@ public class ModificationFinder {
                     if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL
                             || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences
-                                    .computeIfAbsent(insn.name + insn.desc,
-                                                     s -> new HashSet<>()
-                                    )
+                            selfReferences.computeIfAbsent(insn.name
+                                                                   + insn.desc,
+                                                           s -> new HashSet<>()
+                            )
                                     .add(signature);
                         }
                     } else if (insn.getOpcode() == Opcodes.INVOKESTATIC) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences
-                                    .computeIfAbsent(insn.name + insn.desc,
-                                                     s -> new HashSet<>()
-                                    )
+                            selfReferences.computeIfAbsent(insn.name
+                                                                   + insn.desc,
+                                                           s -> new HashSet<>()
+                            )
                                     .add(signature);
                         }
                     }
                 } else if (abstractInsnNodes[i] instanceof InvokeDynamicInsnNode) {
-                    InvokeDynamicInsnNode insn
-                            = (InvokeDynamicInsnNode) abstractInsnNodes[i];
+                    InvokeDynamicInsnNode insn = (InvokeDynamicInsnNode) abstractInsnNodes[i];
 
                     boolean selfMatch = false;
                     String  callChain = null;
                     for (Object bsmArg : insn.bsmArgs) {
                         if (bsmArg instanceof Handle) {
-                            if (((Handle) bsmArg)
-                                    .getOwner()
+                            if (((Handle) bsmArg).getOwner()
                                     .equals(classNode.name)) {
                                 callChain = ((Handle) bsmArg).getName()
                                         + ((Handle) bsmArg).getDesc();
@@ -119,19 +115,17 @@ public class ModificationFinder {
                     }
 
                     if (selfMatch) {
-                        selfReferences
-                                .computeIfAbsent(callChain,
-                                                 s -> new HashSet<>()
-                                )
-                                .add(signature);
+                        selfReferences.computeIfAbsent(callChain,
+                                                       s -> new HashSet<>()
+                        ).add(signature);
                     }
                 }
             }
         }
 
-        Set<String> result         = new HashSet<>();
-        Set<String> visitedMethods = new HashSet<>(methodsWithModifications);
-        Queue<String> unroll = new ArrayDeque<>(methodsWithModifications);
+        Set<String>   result         = new HashSet<>();
+        Set<String>   visitedMethods = new HashSet<>(methodsWithModifications);
+        Queue<String> unroll         = new ArrayDeque<>(methodsWithModifications);
 
         while (unroll.peek() != null) {
             String     signature  = unroll.poll();

@@ -8,6 +8,8 @@ import java.util.List;
  */
 public class DefaultEngine extends Engine {
 
+    private static final String VERSION = "1.0.0";
+
     @Override
     public String detectScope(Class<?> clazz) {
         return "";
@@ -27,7 +29,5 @@ public class DefaultEngine extends Engine {
     public String getVersion() {
         return VERSION;
     }
-
-    private static final String VERSION = "1.0.0";
 
 }

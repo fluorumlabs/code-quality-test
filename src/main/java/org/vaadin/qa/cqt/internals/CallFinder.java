@@ -16,6 +16,12 @@ import java.util.*;
  */
 public class CallFinder {
 
+    private final Class<?> clazz;
+
+    private final String fieldName;
+
+    private final List<String> methods;
+
     /**
      * Instantiates a new call finder for declaring class of field.
      *
@@ -45,12 +51,6 @@ public class CallFinder {
         }
         return false;
     }
-
-    private final Class<?> clazz;
-
-    private final String fieldName;
-
-    private final List<String> methods;
 
     private boolean fieldWasConsumedFromStack(int index,
                                               Analyzer<SourceValue> analyzer) {
@@ -102,12 +102,10 @@ public class CallFinder {
             String signature = method.name + method.desc;
             methodRefs.put(method.name + method.desc, method);
 
-            Analyzer<SourceValue> analyzer
-                    = new Analyzer<>(new SourceInterpreter());
+            Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
             analyzer.analyze(classNode.name, method);
 
-            AbstractInsnNode[] abstractInsnNodes
-                    = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
@@ -118,24 +116,23 @@ public class CallFinder {
                             methodsWithInvocations.add(signature);
                         }
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences
-                                    .computeIfAbsent(insn.name + insn.desc,
-                                                     s -> new HashSet<>()
-                                    )
+                            selfReferences.computeIfAbsent(insn.name
+                                                                   + insn.desc,
+                                                           s -> new HashSet<>()
+                            )
                                     .add(signature);
                         }
                     } else if (insn.getOpcode() == Opcodes.INVOKESTATIC) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences
-                                    .computeIfAbsent(insn.name + insn.desc,
-                                                     s -> new HashSet<>()
-                                    )
+                            selfReferences.computeIfAbsent(insn.name
+                                                                   + insn.desc,
+                                                           s -> new HashSet<>()
+                            )
                                     .add(signature);
                         }
                     }
                 } else if (abstractInsnNodes[i] instanceof InvokeDynamicInsnNode) {
-                    InvokeDynamicInsnNode insn
-                            = (InvokeDynamicInsnNode) abstractInsnNodes[i];
+                    InvokeDynamicInsnNode insn = (InvokeDynamicInsnNode) abstractInsnNodes[i];
 
                     boolean match     = false;
                     boolean selfMatch = false;
@@ -144,8 +141,7 @@ public class CallFinder {
                         if (bsmArg instanceof Handle) {
                             if (methods.contains(((Handle) bsmArg).getName())) {
                                 match = true;
-                            } else if (((Handle) bsmArg)
-                                    .getOwner()
+                            } else if (((Handle) bsmArg).getOwner()
                                     .equals(classNode.name)) {
                                 callChain = ((Handle) bsmArg).getName()
                                         + ((Handle) bsmArg).getDesc();
@@ -158,11 +154,9 @@ public class CallFinder {
                         methodsWithInvocations.add(signature);
                     }
                     if (selfMatch) {
-                        selfReferences
-                                .computeIfAbsent(callChain,
-                                                 s -> new HashSet<>()
-                                )
-                                .add(signature);
+                        selfReferences.computeIfAbsent(callChain,
+                                                       s -> new HashSet<>()
+                        ).add(signature);
                     }
                 }
             }
