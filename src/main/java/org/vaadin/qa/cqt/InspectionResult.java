@@ -58,7 +58,7 @@ public class InspectionResult {
                     CATEGORY_FORMAT.format(inspection.getCategory()),
                     "<span class='separator'>: </span>",
                     MESSAGE_FORMAT.format(inspection.getMessage()),
-                    "<span class='buttons'><a href='#' onclick='self.event.preventDefault(); fetch(\"dismiss?" + descriptor + "\").then(() => self.location.reload());'>Dismiss</a></span>")));
+                    "<span class='buttons'><a href='#' onclick='self.event.preventDefault(); comment = prompt(\"This report will be marked as suppressed for selected class/field in \\x2E\\uD835\\uDE8C\\uD835\\uDE9A\\uD835\\uDE9D\\uD835\\uDE92\\uD835\\uDE90\\uD835\\uDE97\\uD835\\uDE98\\uD835\\uDE9B\\uD835\\uDE8E file and will not appear in future scans.\\n\\nExplanation (required):\", \"False positive\"); if (comment !== null && comment.trim() !== \"\") fetch(\"suppress?\"+encodeURIComponent(\"# \"+comment+\"\\n\")+\"" + descriptor + "\").then(() => self.location.reload());'>Suppress</a></span>")));
             String contextPath = first.formatPathToContext();
             output.append(String.format("\t\tClass:         <a href='/%s/'>%s</a>\n", encodeValue(first.getOwnerClass().getName()), first.formatOwnerClass()));
             output.append(String.format("\t\tContext:       %s\n", first.formatScope()));

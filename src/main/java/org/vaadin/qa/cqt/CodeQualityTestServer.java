@@ -165,11 +165,20 @@ public class CodeQualityTestServer {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            String path = exchange.getRequestURI().getPath();
+
+            if (!path.endsWith("/") && !path.endsWith("/scan") && !path.endsWith("/suppress")) {
+                exchange.getResponseHeaders().add("Location", path + "/");
+                exchange.sendResponseHeaders(302, -1);
+                return;
+            }
+
             exchange.getResponseHeaders().add("Content-Type", "text/html");
             exchange.sendResponseHeaders(200, 0);
 
             try (PrintWriter output = new PrintWriter(exchange.getResponseBody(), true)) {
                 output.println("<!DOCTYPE html><html><base href='.'>");
+                output.println("<title>Poo Fighter -- CQT Server " + EngineInstance.get().getName() + "</title>");
                 output.println("<style>\n" +
                         "    body {\n" +
                         "        font-size: 16px;\n" +
@@ -331,8 +340,6 @@ public class CodeQualityTestServer {
 
                 preamble(output);
 
-                String path = exchange.getRequestURI().getPath();
-
                 try {
                     boolean needToRunScanner = !resultsAreReady.get() && !scannerIsRunning.get();
                     if (path.endsWith("/scan") || needToRunScanner) {
@@ -346,9 +353,12 @@ public class CodeQualityTestServer {
                         }
                         refreshWhenScannerIsDone(output);
                     } else {
-                        if (path.endsWith("/dismiss")) {
-                            path = path.substring(0, path.lastIndexOf("/dismiss"));
-                            String whatToDismiss = exchange.getRequestURI().getQuery().replace('+',' ');
+                        if (path.endsWith("/suppress")) {
+                            path = path.substring(0, path.lastIndexOf("/suppress"));
+                            String whatToDismiss = exchange.getRequestURI().getQuery().replace('+', ' ').trim();
+                            if (whatToDismiss.endsWith("#")) {
+                                whatToDismiss = whatToDismiss.substring(0, whatToDismiss.indexOf('#')).trim();
+                            }
                             appendDismissedReportDescriptor(whatToDismiss);
                         }
 
@@ -389,9 +399,11 @@ public class CodeQualityTestServer {
         private Set<String> readDismissedReportDescriptors() {
             Path cqtIgnore = cqtIgnoreRoot.resolve(".cqtignore");
             if (Files.exists(cqtIgnore)) {
-                try (Stream<String> lines = Files.lines(cqtIgnore, StandardCharsets.UTF_8)){
-
-                    return lines.filter(s -> !s.startsWith("#"))
+                try (Stream<String> lines = Files.lines(cqtIgnore, StandardCharsets.UTF_8)) {
+                    return lines
+                            .map(s -> s.indexOf('#') >= 0 ? s.substring(0, s.indexOf('#')) : s)
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
                             .collect(Collectors.toSet());
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -403,7 +415,13 @@ public class CodeQualityTestServer {
         private void appendDismissedReportDescriptor(String whatToDismiss) {
             Path cqtIgnore = cqtIgnoreRoot.resolve(".cqtignore");
             try {
-                Files.write(cqtIgnore, Collections.singletonList(whatToDismiss), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                if (!Files.exists(cqtIgnore)) {
+                    Files.write(cqtIgnore, Collections.singletonList("# Code Quality Test report suppression list"), StandardCharsets.UTF_8, StandardOpenOption.CREATE);
+                }
+
+                int separator = whatToDismiss.indexOf('\n');
+
+                Files.write(cqtIgnore, Arrays.asList("", whatToDismiss.substring(0, separator), whatToDismiss.substring(separator+1)), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -440,7 +458,7 @@ public class CodeQualityTestServer {
                         }
                     }
 
-                    if (dismissed.stream().anyMatch(desc -> currentResult.contains("<!-- Descriptor: "+HtmlFormatter.encodeValue(desc)+" -->"))) {
+                    if (dismissed.stream().anyMatch(desc -> currentResult.contains("<!-- Descriptor: " + HtmlFormatter.encodeValue(desc) + " -->"))) {
                         continue;
                     }
 
