@@ -2,13 +2,17 @@ package org.vaadin.qa.cqt.suites;
 
 import org.vaadin.qa.cqt.*;
 import org.vaadin.qa.cqt.annotations.*;
+import org.vaadin.qa.cqt.data.Reference;
+import org.vaadin.qa.cqt.data.ReferenceType;
+import org.vaadin.qa.cqt.utils.Classes;
+import org.vaadin.qa.cqt.utils.Unreflection;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
-import static org.vaadin.qa.cqt.suites.Classes.*;
+import static org.vaadin.qa.cqt.utils.Classes.*;
 
 @SuppressWarnings("unchecked")
 public class CollectionInspections extends Suite {
@@ -245,7 +249,7 @@ public class CollectionInspections extends Suite {
                         isStatic(),
                         type(is(Map.class)),
                         genericType(0, is(Class.class)),
-                        genericType(1, clazz -> getScanner().isInScope(clazz))
+                        genericType(1, clazz -> getScanner().matchesFilter(clazz))
                 ),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );

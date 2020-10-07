@@ -3,7 +3,11 @@ package org.vaadin.qa.cqt;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.vaadin.qa.cqt.data.InspectionResult;
+import org.vaadin.qa.cqt.data.Reference;
 import org.vaadin.qa.cqt.engine.EngineInstance;
+import org.vaadin.qa.cqt.internals.Scanner;
+import org.vaadin.qa.cqt.internals.ScopeDetector;
 import org.vaadin.qa.cqt.suites.CollectionInspections;
 import org.vaadin.qa.cqt.suites.FieldInspections;
 import org.vaadin.qa.cqt.suites.LambdaInspections;
@@ -27,59 +31,64 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * Code Quality Test Server.
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CodeQualityTestServer {
-    private static final int DEFAULT_PORT = 8777;
-    private final Map<Class<?>, String> scopeHints = new HashMap<>();
-    private final List<Supplier<Suite>> suites = new ArrayList<>();
-    private final List<Supplier<Object>> scanTargets = new ArrayList<>();
-    private Predicate<Class<?>> includes = x -> false;
-    private Predicate<Class<?>> excludes = x -> false;
-    private Path cqtIgnoreRoot = Paths.get("");
-    private int port = DEFAULT_PORT;
-
-    public CodeQualityTestServer listenOn(int port) {
-        this.port = port;
-        return this;
-    }
-
+    /**
+     * Configure location of {@code .cqtignore} file
+     *
+     * @param path the path
+     * @return the code quality test server
+     */
     public CodeQualityTestServer cqtIgnoreRoot(String path) {
         this.cqtIgnoreRoot = Paths.get(path);
         return this;
     }
 
+    /**
+     * Configure location of {@code .cqtignore} file
+     *
+     * @param path the path
+     * @return the code quality test server
+     */
     public CodeQualityTestServer cqtIgnoreRoot(File path) {
         this.cqtIgnoreRoot = path.toPath();
         return this;
     }
 
+    /**
+     * Configure location of {@code .cqtignore} file
+     *
+     * @param path the path
+     * @return the code quality test server
+     */
     public CodeQualityTestServer cqtIgnoreRoot(Path path) {
         this.cqtIgnoreRoot = path;
         return this;
     }
 
-    public CodeQualityTestServer includePackages(String... strings) {
-        includes = includes.or(
-                Stream.of(strings)
-                        .<Predicate<Class<?>>>map(p -> (clazz -> clazz.getName().startsWith(p)))
-                        .reduce(Predicate::or)
-                        .orElse(x -> true)
-        );
-        return this;
-    }
-
-    public CodeQualityTestServer include(Predicate<Class<?>> filter) {
+    /**
+     * Configure scanner to exclude specific classes from the report.
+     *
+     * @param filter the filter
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer exclude(Predicate<Class<?>> filter) {
         includes = includes.or(filter);
         return this;
     }
 
+    /**
+     * Configure scanner to exclude classes of specified packages from the report.
+     *
+     * @param strings the strings
+     * @return the code quality test server
+     */
     public CodeQualityTestServer excludePackages(String... strings) {
         excludes = excludes.or(
                 Stream.of(strings)
@@ -90,26 +99,58 @@ public class CodeQualityTestServer {
         return this;
     }
 
-    public CodeQualityTestServer exclude(Predicate<Class<?>> filter) {
+    /**
+     * Configure scanner to include specific classes in the report.
+     *
+     * @param filter the filter
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer include(Predicate<Class<?>> filter) {
         includes = includes.or(filter);
         return this;
     }
 
-    public CodeQualityTestServer withSuites(Supplier<Suite>... supplier) {
-        suites.addAll(Arrays.asList(supplier));
+    /**
+     * Configure scanner to include classes of specified packages in the report.
+     *
+     * @param strings the strings
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer includePackages(String... strings) {
+        includes = includes.or(
+                Stream.of(strings)
+                        .<Predicate<Class<?>>>map(p -> (clazz -> clazz.getName().startsWith(p)))
+                        .reduce(Predicate::or)
+                        .orElse(x -> true)
+        );
         return this;
     }
 
+    /**
+     * Configure server to listen on specified port.
+     *
+     * @param port the port
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer listenOn(int port) {
+        this.port = port;
+        return this;
+    }
+
+    /**
+     * Configure scanner to scan specific objects instead of class loaders.
+     *
+     * @param supplier the supplier
+     * @return the code quality test server
+     */
     public CodeQualityTestServer scanTargets(Supplier<Object>... supplier) {
         scanTargets.addAll(Arrays.asList(supplier));
         return this;
     }
 
-    public CodeQualityTestServer withScopeHint(Class<?> clazz, String scope) {
-        scopeHints.put(clazz, scope);
-        return this;
-    }
-
+    /**
+     * Start server.
+     */
     public void start() {
         String property = System.getProperty("cqt-started");
         if (!"true".equals(property)) {
@@ -120,7 +161,7 @@ public class CodeQualityTestServer {
                 server.createContext("/", new MyHandler());
                 server.setExecutor(Executors.newFixedThreadPool(5));
                 server.start();
-                String preamble = "Code Quality Test Server (" + EngineInstance.get().getName() + ")";
+                String preamble = "Code Quality Test Server (" + EngineInstance.get().getVersion() + ")";
                 String banner = "Server running at http://localhost:" + port;
                 int width = Math.max(preamble.length(), banner.length());
                 String separator = new String(new char[width]).replace('\0', '*');
@@ -140,30 +181,38 @@ public class CodeQualityTestServer {
         }
     }
 
-    private class MyHandler implements HttpHandler {
-        private final List<String> previousResults = new CopyOnWriteArrayList<>();
-        private final List<String> currentResults = new CopyOnWriteArrayList<>();
-        private final List<String> hiddenDescriptors = new CopyOnWriteArrayList<>();
-        private final Scanner scanner = new Scanner(includes.and(excludes.negate()));
+    /**
+     * Hint scope detector of scope for specified class.
+     *
+     * @param clazz the clazz
+     * @param scope the scope
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer withScopeHint(Class<?> clazz, String scope) {
+        scopeHints.put(clazz, scope);
+        return this;
+    }
 
-        private final Object resultLockObject = new Object();
+    /**
+     * Configure scanner to use specific set of inspection suites.
+     *
+     * @param supplier the supplier
+     * @return the code quality test server
+     */
+    public CodeQualityTestServer withSuites(Supplier<Suite>... supplier) {
+        suites.addAll(Arrays.asList(supplier));
+        return this;
+    }
+    private static final int DEFAULT_PORT = 8777;
+    private final List<Supplier<Object>> scanTargets = new ArrayList<>();
+    private final Map<Class<?>, String> scopeHints = new HashMap<>();
+    private final List<Supplier<Suite>> suites = new ArrayList<>();
+    private Path cqtIgnoreRoot = Paths.get("");
+    private Predicate<Class<?>> excludes = x -> false;
+    private Predicate<Class<?>> includes = x -> false;
+    private int port = DEFAULT_PORT;
 
-        private final AtomicBoolean resultsAreReady = new AtomicBoolean(false);
-        private final AtomicBoolean scannerIsRunning = new AtomicBoolean(false);
-
-        private volatile String lastScanDate = "";
-
-        private MyHandler() {
-            if (suites.isEmpty()) {
-                scanner.addSuite(CollectionInspections::new);
-                scanner.addSuite(LambdaInspections::new);
-                scanner.addSuite(ResourceInspections::new);
-                scanner.addSuite(FieldInspections::new);
-            } else {
-                suites.forEach(scanner::addSuite);
-            }
-        }
-
+    private final class MyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
@@ -179,7 +228,7 @@ public class CodeQualityTestServer {
 
             try (PrintWriter output = new PrintWriter(exchange.getResponseBody(), true)) {
                 output.println("<!DOCTYPE html><html><base href='.'>");
-                output.println("<title>CQT Server " + EngineInstance.get().getName() + "</title>");
+                output.println("<title>CQT Server " + EngineInstance.get().getVersion() + "</title>");
                 output.println("<style>\n" +
                         "    body {\n" +
                         "        font-size: 16px;\n" +
@@ -414,21 +463,25 @@ public class CodeQualityTestServer {
                 e.printStackTrace();
             }
         }
+        private final List<String> currentResults = new CopyOnWriteArrayList<>();
+        private final List<String> hiddenDescriptors = new CopyOnWriteArrayList<>();
+        private final List<String> previousResults = new CopyOnWriteArrayList<>();
+        private final Object resultLockObject = new Object();
 
-        private Set<String> readDismissedReportDescriptors() {
-            Path cqtIgnore = cqtIgnoreRoot.resolve(".cqtignore");
-            if (Files.exists(cqtIgnore)) {
-                try (Stream<String> lines = Files.lines(cqtIgnore, StandardCharsets.UTF_8)) {
-                    return lines
-                            .map(s -> s.indexOf('#') >= 0 ? s.substring(0, s.indexOf('#')) : s)
-                            .map(String::trim)
-                            .filter(s -> !s.isEmpty())
-                            .collect(Collectors.toSet());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        private final AtomicBoolean resultsAreReady = new AtomicBoolean(false);
+        private final org.vaadin.qa.cqt.internals.Scanner scanner = new Scanner(includes.and(excludes.negate()));
+        private final AtomicBoolean scannerIsRunning = new AtomicBoolean(false);
+        private volatile String lastScanDate = "";
+
+        private MyHandler() {
+            if (suites.isEmpty()) {
+                scanner.addSuite(CollectionInspections::new);
+                scanner.addSuite(LambdaInspections::new);
+                scanner.addSuite(ResourceInspections::new);
+                scanner.addSuite(FieldInspections::new);
+            } else {
+                suites.forEach(scanner::addSuite);
             }
-            return Collections.emptySet();
         }
 
         private void appendDismissedReportDescriptor(String whatToDismiss) {
@@ -440,16 +493,30 @@ public class CodeQualityTestServer {
 
                 int separator = whatToDismiss.indexOf('\n');
 
-                Files.write(cqtIgnore, Arrays.asList("", whatToDismiss.substring(0, separator), whatToDismiss.substring(separator+1)), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                Files.write(cqtIgnore, Arrays.asList("", whatToDismiss.substring(0, separator), whatToDismiss.substring(separator + 1)), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        private void refreshWhenScannerIsDone(PrintWriter output) {
-            synchronized (scanner) {
-                refresh(output);
-            }
+        private void autoRefresh(PrintWriter output) {
+            output.print("<script>\n" +
+                    "    function autoRefresh() {" +
+                    " " +
+                    "self.location.replace(document.baseURI); }\n" +
+                    "    self.window.addEventListener('DOMContentLoaded', autoRefresh);\n" +
+                    "</script>");
+        }
+
+        private void banner(PrintWriter output) {
+            output.println("<span class='banner'><span class='application'>Code Quality Test Server (" + EngineInstance.get().getVersion() + ")</span></span>");
+            output.println();
+        }
+
+        private void cancelAutoRefresh(PrintWriter output) {
+            output.print("<script>\n" +
+                    "    self.window.removeEventListener('DOMContentLoaded', autoRefresh);\n" +
+                    "</script>");
         }
 
         private void printResults(PrintWriter output, String path) {
@@ -495,28 +562,30 @@ public class CodeQualityTestServer {
             }
         }
 
-        private void banner(PrintWriter output) {
-            output.println("<span class='banner'><span class='application'>Code Quality Test Server (" + EngineInstance.get().getName() + ")</span></span>");
-            output.println();
+        private Set<String> readDismissedReportDescriptors() {
+            Path cqtIgnore = cqtIgnoreRoot.resolve(".cqtignore");
+            if (Files.exists(cqtIgnore)) {
+                try (Stream<String> lines = Files.lines(cqtIgnore, StandardCharsets.UTF_8)) {
+                    return lines
+                            .map(s -> s.indexOf('#') >= 0 ? s.substring(0, s.indexOf('#')) : s)
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.toSet());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return Collections.emptySet();
         }
 
         private void refresh(PrintWriter output) {
             output.print("<script>self.location.replace(document.baseURI)</script>");
         }
 
-        private void autoRefresh(PrintWriter output) {
-            output.print("<script>\n" +
-                    "    function autoRefresh() {" +
-                    " " +
-                    "self.location.replace(document.baseURI); }\n" +
-                    "    self.window.addEventListener('DOMContentLoaded', autoRefresh);\n" +
-                    "</script>");
-        }
-
-        private void cancelAutoRefresh(PrintWriter output) {
-            output.print("<script>\n" +
-                    "    self.window.removeEventListener('DOMContentLoaded', autoRefresh);\n" +
-                    "</script>");
+        private void refreshWhenScannerIsDone(PrintWriter output) {
+            synchronized (scanner) {
+                refresh(output);
+            }
         }
 
         private void runScanner(PrintWriter output) {
@@ -526,7 +595,7 @@ public class CodeQualityTestServer {
                 try {
                     autoRefresh(output);
                     scanner.setOutput(output);
-                    scanner.clear();
+                    scanner.reset();
 
                     scanner.visitEngine();
                     if (scanTargets.isEmpty()) {
@@ -538,11 +607,11 @@ public class CodeQualityTestServer {
                     // Copy prev/new results
 
                     List<String> newReports = scanner.analyze().stream()
-                            .sorted(Comparator.comparing(InspectionResult::getLevel).reversed()
-                                    .thenComparing(InspectionResult::getCategory)
-                                    .thenComparing(InspectionResult::getMessage))
+                            .sorted(Comparator.comparing(InspectionResult::getInspectionLevel).reversed()
+                                    .thenComparing(InspectionResult::getInspectionCategory)
+                                    .thenComparing(InspectionResult::getInspectionMessage))
                             .flatMap(ir -> {
-                                return ir.format().stream().sorted();
+                                return ir.toHtml().stream().sorted();
                             })
                             .collect(Collectors.toList());
 

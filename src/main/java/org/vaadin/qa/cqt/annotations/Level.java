@@ -1,10 +1,19 @@
 package org.vaadin.qa.cqt.annotations;
 
 /**
- * Created by Artem Godin on 10/2/2020.
+ * {@link Report} severity level.
  */
 public enum Level {
+    /**
+     * Info
+     */
     INFO,
+    /**
+     * Warning
+     */
     WARNING,
+    /**
+     * Error
+     */
     ERROR
 }

@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
 
 /**
- * Created by Artem Godin on 10/6/2020.
+ * The type Context listener to intercept Spring {@code ApplicationContext} instance.
  */
 public class ContextListener implements ApplicationListener<ApplicationContextEvent> {
     private static ApplicationContext context;
@@ -16,6 +16,11 @@ public class ContextListener implements ApplicationListener<ApplicationContextEv
         context = event.getApplicationContext();
     }
 
+    /**
+     * Gets Spring {@code ApplicationContext}.
+     *
+     * @return the context
+     */
     public static ApplicationContext getContext() {
         return context;
     }

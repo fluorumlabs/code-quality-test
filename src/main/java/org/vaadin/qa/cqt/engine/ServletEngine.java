@@ -1,19 +1,16 @@
 package org.vaadin.qa.cqt.engine;
 
-import org.vaadin.qa.cqt.ScopeDetector;
-
 import javax.servlet.*;
 import javax.servlet.http.HttpSession;
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * {@link Engine} with Servlet support
  */
 public class ServletEngine extends DefaultEngine {
     @Override
-    public String getRealmFromAnnotations(Class<?> clazz) {
+    public String detectScope(Class<?> clazz) {
         if (Servlet.class.isAssignableFrom(clazz)
                 || Filter.class.isAssignableFrom(clazz)
                 || ServletContext.class.isAssignableFrom(clazz)
@@ -31,16 +28,16 @@ public class ServletEngine extends DefaultEngine {
             return "request";
         }
 
-        return super.getRealmFromAnnotations(clazz);
+        return super.detectScope(clazz);
     }
 
     @Override
-    public String getName() {
-        return super.getName()+"-servlet";
+    public String getVersion() {
+        return super.getVersion()+"-servlet";
     }
 
     @Override
-    public List<String> getContextOrder() {
+    public List<String> getScopeOrder() {
         return Arrays.asList("request", "session", "singleton", "static");
     }
 }

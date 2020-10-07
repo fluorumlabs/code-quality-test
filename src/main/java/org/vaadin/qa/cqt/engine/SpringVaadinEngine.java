@@ -2,17 +2,16 @@ package org.vaadin.qa.cqt.engine;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.*;
-import org.vaadin.qa.cqt.ScopeDetector;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * {@link Engine} with Spring, Servlet and Vaadin support
  */
 public class SpringVaadinEngine extends SpringServletEngine {
     @Override
-    public String getRealmFromAnnotations(Class<?> clazz) {
+    public String detectScope(Class<?> clazz) {
         if (VaadinService.class.isAssignableFrom(clazz)
                 || RequestHandler.class.isAssignableFrom(clazz)
                 || VaadinContext.class.isAssignableFrom(clazz)
@@ -30,16 +29,16 @@ public class SpringVaadinEngine extends SpringServletEngine {
             return "request";
         }
 
-        return super.getRealmFromAnnotations(clazz);
+        return super.detectScope(clazz);
     }
 
     @Override
-    public String getName() {
-        return super.getName()+"-vaadin";
+    public String getVersion() {
+        return super.getVersion()+"-vaadin";
     }
 
     @Override
-    public List<String> getContextOrder() {
+    public List<String> getScopeOrder() {
         return Arrays.asList("request", "vaadin-ui", "vaadin-session", "session", "singleton", "application", "restart", "static");
     }
 

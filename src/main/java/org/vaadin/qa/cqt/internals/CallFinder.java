@@ -1,4 +1,4 @@
-package org.vaadin.qa.cqt;
+package org.vaadin.qa.cqt.internals;
 
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.Handle;
@@ -7,25 +7,37 @@ import jdk.internal.org.objectweb.asm.tree.*;
 import jdk.internal.org.objectweb.asm.tree.analysis.*;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Member;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
- * Created by Artem Godin on 9/29/2020.
+ * Helper to find visible/exposed methods which call specific
+ * methods of an object that can be stored in a specific field.
  */
 public class CallFinder {
     private final Class<?> clazz;
     private final String fieldName;
     private final List<String> methods;
 
+    /**
+     * Instantiates a new call finder for declaring class of field.
+     *
+     * @param field   the field
+     * @param methods the list of methods
+     */
     public CallFinder(Member field, List<String> methods) {
         clazz = field.getDeclaringClass();
         fieldName = field.getName();
         this.methods = Collections.unmodifiableList(methods);
     }
 
+    /**
+     * Test if methods specified in {@link CallFinder#CallFinder(Member, List)} are not
+     * called from listed methods.
+     *
+     * @param methodNames the method names
+     * @return the boolean
+     */
     public boolean calledByNot(String... methodNames) {
         try {
             Set<String> callingMethods = findCallingMethods();
@@ -68,8 +80,6 @@ public class CallFinder {
 
         return fields.contains(fieldName);
     }
-
-
 
     private Set<String> findCallingMethods() throws IOException, AnalyzerException {
         ClassNode classNode = new ClassNode();

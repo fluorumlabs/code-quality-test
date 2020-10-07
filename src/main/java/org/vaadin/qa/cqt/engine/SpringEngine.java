@@ -1,7 +1,5 @@
 package org.vaadin.qa.cqt.engine;
 
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.server.*;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -9,25 +7,20 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.vaadin.qa.cqt.ScopeDetector;
+import org.vaadin.qa.cqt.internals.ScopeDetector;
 import org.vaadin.qa.cqt.engine.spring.ContextListener;
 
-import javax.servlet.Filter;
-import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpSession;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * {@link Engine} with Spring support
  */
 public class SpringEngine extends DefaultEngine {
     @Override
-    public String getRealmFromAnnotations(Class<?> clazz) {
+    public String detectScope(Class<?> clazz) {
         if (Component.class.isAssignableFrom(clazz)
                 || ApplicationContext.class.isAssignableFrom(clazz)
         ) {
@@ -44,7 +37,7 @@ public class SpringEngine extends DefaultEngine {
         boolean isComponent = Arrays.stream(annotations)
                 .map(Annotation::annotationType)
                 .filter(cz -> !cz.getName().equals(clazz.getName()))
-                .map(ScopeDetector::getRealmFromCache)
+                .map(ScopeDetector::detectScope)
                 .anyMatch("singleton"::equals);
         if (isComponent) {
             // Found @Component
@@ -58,11 +51,11 @@ public class SpringEngine extends DefaultEngine {
             }
             return "singleton";
         }
-        return super.getRealmFromAnnotations(clazz);
+        return super.detectScope(clazz);
     }
 
     @Override
-    public void enqueObjects(BiConsumer<Object, String> consumer) {
+    public void addSystemObjects(BiConsumer<Object, String> consumer) {
         ApplicationContext context = ContextListener.getContext();
         if (context instanceof ConfigurableApplicationContext) {
             ConfigurableListableBeanFactory clbf = ((ConfigurableApplicationContext) context).getBeanFactory();
@@ -86,12 +79,12 @@ public class SpringEngine extends DefaultEngine {
     }
 
     @Override
-    public String getName() {
-        return super.getName()+"-spring";
+    public String getVersion() {
+        return super.getVersion()+"-spring";
     }
 
     @Override
-    public List<String> getContextOrder() {
+    public List<String> getScopeOrder() {
         return Arrays.asList("request", "session", "singleton", "application", "restart", "static");
     }
 

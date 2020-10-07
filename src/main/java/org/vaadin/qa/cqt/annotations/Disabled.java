@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Artem Godin on 9/24/2020.
+ * Disable {@link org.vaadin.qa.cqt.Suite} inspection
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

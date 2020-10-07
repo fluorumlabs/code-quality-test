@@ -1,9 +1,10 @@
 package org.vaadin.qa.cqt.suites;
 
-import org.vaadin.qa.cqt.Reference;
+import org.vaadin.qa.cqt.data.Reference;
 import org.vaadin.qa.cqt.Suite;
 import org.vaadin.qa.cqt.annotations.Scopes;
 import org.vaadin.qa.cqt.annotations.Warning;
+import org.vaadin.qa.cqt.utils.Classes;
 
 import java.util.function.Predicate;
 
@@ -22,7 +23,7 @@ public final class LambdaInspections extends Suite {
                         type(isNot(Classes.BOXED_PRIMITIVE_OR_STRING))
                 ),
                 targetType(isNot("org.springframework.beans.factory.config.Scope")),
-                backreference(isNotInContext("static", "singleton", "instance"))
+                backreference(isNotInScope("static", "singleton", "instance"))
         );
     }
 
@@ -35,7 +36,7 @@ public final class LambdaInspections extends Suite {
                         type(isNot(Classes.BOXED_PRIMITIVE_OR_STRING))
                 ),
                 targetType(isNot("org.springframework.beans.factory.config.Scope")),
-                backreference(isNotInContext("static", "singleton", "session", "instance"))
+                backreference(isNotInScope("static", "singleton", "session", "instance"))
         );
     }
 }

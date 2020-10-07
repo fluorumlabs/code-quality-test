@@ -1,7 +1,7 @@
 package org.vaadin.qa.cqt.suites;
 
-import org.vaadin.qa.cqt.Reference;
-import org.vaadin.qa.cqt.ReferenceType;
+import org.vaadin.qa.cqt.data.Reference;
+import org.vaadin.qa.cqt.data.ReferenceType;
 import org.vaadin.qa.cqt.Suite;
 import org.vaadin.qa.cqt.annotations.*;
 

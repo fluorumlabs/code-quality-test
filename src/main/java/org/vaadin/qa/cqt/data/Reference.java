@@ -1,5 +1,9 @@
-package org.vaadin.qa.cqt;
+package org.vaadin.qa.cqt.data;
 
+import org.vaadin.qa.cqt.internals.ObjectData;
+import org.vaadin.qa.cqt.internals.ObjectValue;
+import org.vaadin.qa.cqt.internals.PossibleValue;
+import org.vaadin.qa.cqt.internals.Scanner;
 import org.vaadin.qa.cqt.utils.HtmlFormatter;
 
 import javax.annotation.Nullable;
@@ -13,7 +17,7 @@ import java.util.stream.Collectors;
 import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
 
 /**
- * Created by Artem Godin on 9/23/2020.
+ * Reference holding inspection subject (object-object relationship, for example field or collection-item).
  */
 public final class Reference {
     private static final int MAX_CONTEXT_PATH_DEPTH = 10;
@@ -74,9 +78,17 @@ public final class Reference {
         this.scanner = scanner;
     }
 
+    /**
+     * Instantiate a reference
+     *
+     * @param owner   the owner object (LHS of relationship)
+     * @param value   the value (RHS of relationship)
+     * @param scanner the scanner instance
+     * @return the reference
+     */
     public static Reference from(Object owner, ObjectValue value, Scanner scanner) {
         Object targetValue = value.getValue();
-        Class<?> targetClass = (value.getReferenceType()==ReferenceType.POSSIBLE_VALUE && value.getValue() instanceof PossibleValue)
+        Class<?> targetClass = (value.getReferenceType() == ReferenceType.POSSIBLE_VALUE && value.getValue() instanceof PossibleValue)
                 ? ((PossibleValue) value.getValue()).getType()
                 : (targetValue == null ? null : targetValue.getClass());
         Class<?> ownerClass;
@@ -97,11 +109,17 @@ public final class Reference {
         );
     }
 
+    /**
+     * Format class name as HTML.
+     *
+     * @param clazz the clazz
+     * @return the class name in HTML format
+     */
     public static String formatClassName(Class<?> clazz) {
         return formatClassName(clazz, true);
     }
 
-    public static String formatClassName(Class<?> clazz, boolean includePackage) {
+    private static String formatClassName(Class<?> clazz, boolean includePackage) {
         if (clazz.isArray()) {
             return formatClassName(clazz.getComponentType(), includePackage) + REFERENCE_TYPE_FORMAT.format("[]");
         }
@@ -120,7 +138,7 @@ public final class Reference {
             className = CLASS_NAME_FORMAT.format(String.join(".", classParts));
         }
 
-        StringBuilder sb = new StringBuilder("");
+        StringBuilder sb = new StringBuilder();
 
         TypeVariable<?>[] typeparms = clazz.getTypeParameters();
         if (typeparms.length > 0) {
@@ -138,41 +156,41 @@ public final class Reference {
         return className + GENERIC_ARGUMENTS_FORMAT.format(sb);
     }
 
-    public static String formatRawClassName(Class<?> clazz) {
-        if (clazz.isArray()) {
-            return formatRawClassName(clazz.getComponentType()) + "[]";
-        }
-
-        Deque<String> classParts = new LinkedList<>();
-        Class<?> currentClass = clazz;
-        while (currentClass != null) {
-            classParts.addFirst(currentClass.getSimpleName());
-            currentClass = currentClass.getDeclaringClass();
-        }
-
-        return  (clazz.getPackage() == null ? "" : clazz.getPackage().getName() + ".") + String.join(".", classParts);
-    }
-
-    public static String formatShortClassName(Class<?> clazz) {
+    private static String formatShortClassName(Class<?> clazz) {
         return formatClassName(clazz, false);
     }
 
-    public boolean isInScope() {
-        return scanner.isInScope(ownerClass);
+    private boolean matchesFilter() {
+        return scanner.matchesFilter(ownerClass);
     }
 
+    /**
+     * Gets owner object scope.
+     *
+     * @return the scope, {@code "instance"} if unknown
+     */
     public String getScope() {
-        return ownerData == null ? "instance" : ownerData.getScope();
+        return ownerData == null ? "instance" : ownerData.getEffectiveScope();
     }
 
-    public boolean hasOwnScope() {
+    private boolean hasOwnScope() {
         return ownerData != null && ownerData.hasOwnScope();
     }
 
+    /**
+     * Format owner object scope string as HTML.
+     *
+     * @return the formatted scope
+     */
     public String formatScope() {
         return SCOPE_FORMAT.format(ownerData.getPrintableScope());
     }
 
+    /**
+     * Format owner class name as HTML.
+     *
+     * @return the formatted owner class name
+     */
     public String formatOwnerClass() {
         if (field == null) {
             return formatClassName(ownerClass);
@@ -181,6 +199,11 @@ public final class Reference {
         }
     }
 
+    /**
+     * Format field as HTML.
+     *
+     * @return the formatted field
+     */
     public String formatField() {
         if (field == null) {
             return "";
@@ -192,21 +215,26 @@ public final class Reference {
         }
     }
 
-    public String getFieldModifiers() {
+    private String getFieldModifiers() {
         if (field == null) {
             return "";
         }
         return Modifier.toString(field.getModifiers());
     }
 
-    public String getFieldType() {
+    private String getFieldType() {
         if (field == null) {
             return "";
         }
         return field.getGenericType().getTypeName();
     }
 
-    public String getReference() {
+    /**
+     * Gets reference id.
+     *
+     * @return the reference id
+     */
+    public String getId() {
         if (field == null) {
             return ownerClass.getTypeName();
         } else {
@@ -218,7 +246,7 @@ public final class Reference {
         }
     }
 
-    public String formatPartial() {
+    private String formatPartial() {
         if (field == null) {
             return "";
         } else {
@@ -231,6 +259,11 @@ public final class Reference {
         }
     }
 
+    /**
+     * Format list of referencing fields as HTML.
+     *
+     * @return the list of referencing fields
+     */
     public List<String> formatBackreferences() {
         if (target == null) {
             return Collections.emptyList();
@@ -246,14 +279,19 @@ public final class Reference {
         }
 
         return map.entrySet().stream()
-                .filter(ref -> ref.getKey().isInScope())
+                .filter(ref -> ref.getKey().matchesFilter())
                 .map(e -> e.getKey().formatOwnerClass() + PARTIAL_FORMAT.format(e.getValue()))
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
     }
 
-    public String formatPathToContext() {
+    /**
+     * Format path to owner object scope root (object which has own scope defined) as HTML.
+     *
+     * @return the formatted path to owner object scope root.
+     */
+    public String formatPathToScopeRoot() {
         if (owner == null || getScope().equals("instance") || hasOwnScope()) {
             return "";
         }
@@ -279,6 +317,11 @@ public final class Reference {
         return "";
     }
 
+    /**
+     * Format target value as HTML.
+     *
+     * @return the formatted string
+     */
     public String formatValue() {
         if (target == null) {
             return NULL_VALUE_FORMAT.format("null");
@@ -308,33 +351,68 @@ public final class Reference {
         }
     }
 
+    /**
+     * Gets target object (RHS).
+     *
+     * @return the target object
+     */
     @Nullable
     public Object getTarget() {
         return target;
     }
 
+    /**
+     * Gets target object class.
+     *
+     * @return the target class
+     */
     @Nullable
     public Class<?> getTargetClass() {
         return targetClass;
     }
 
+    /**
+     * Gets owner object (LHS).
+     *
+     * @return the owner object
+     */
     public Object getOwner() {
         return owner;
     }
 
+    /**
+     * Gets owner class.
+     *
+     * @return the owner class
+     */
     public Class<?> getOwnerClass() {
         return ownerClass;
     }
 
+    /**
+     * Gets reference type (see {@link ReferenceType}
+     *
+     * @return the reference type
+     */
     public ReferenceType getReferenceType() {
         return referenceType;
     }
 
+    /**
+     * Gets field.
+     *
+     * @return the field
+     */
     @Nullable
     public Field getField() {
         return field;
     }
 
+    /**
+     * Gets scanner instance.
+     *
+     * @return the scanner instance
+     */
     public Scanner getScanner() {
         return scanner;
     }

@@ -6,14 +6,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Artem Godin on 9/24/2020.
+ * Mark annotation to be usable for {@link org.vaadin.qa.cqt.Suite} inspections.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Report {
 
+    /**
+     * Report category (for example {@literal "Warning"})
+     *
+     * @return report category
+     */
     String name();
 
+    /**
+     * Report severity level (for example {@link Level#WARNING})
+     *
+     * @return severity level
+     */
     Level level();
 
 }

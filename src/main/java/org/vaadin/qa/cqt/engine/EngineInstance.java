@@ -1,7 +1,9 @@
 package org.vaadin.qa.cqt.engine;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * {@link Engine} instance initializer and holder.
+ *
+ * Particular instantiated engine is detected based on the environment.
  */
 public final class EngineInstance {
     private EngineInstance() {}
@@ -32,6 +34,11 @@ public final class EngineInstance {
         }
     }
 
+    /**
+     * Get {@link Engine} instance.
+     *
+     * @return the {@link Engine} instance
+     */
     public static Engine get() {
         return engine;
     }

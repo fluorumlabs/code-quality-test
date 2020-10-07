@@ -1,33 +1,53 @@
-package org.vaadin.qa.cqt;
+package org.vaadin.qa.cqt.internals;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Artem Godin on 9/23/2020.
+ * Object data associated with a particulat object instance.
  */
 public class ObjectData {
     @Nullable
     private final String scope;
+    private final List<ObjectValue> objectValues;
     @Nullable
     private String inheritedScope;
-    private final List<ObjectValue> objectValues;
 
+    /**
+     * Instantiates a new object data.
+     *
+     * @param scope the scope
+     */
     ObjectData(@Nullable String scope) {
         this.scope = scope;
         this.objectValues = new ArrayList<>();
     }
 
+    /**
+     * Add value associated with this object (see {@link ObjectValue}.
+     *
+     * @param objectValue the related object value
+     */
     public void addValue(ObjectValue objectValue) {
         objectValues.add(objectValue);
     }
 
+    /**
+     * Test if owner object has own (not inherited) scope defined.
+     *
+     * @return {@code true} if owner has own scope.
+     */
     public boolean hasOwnScope() {
         return scope != null;
     }
 
-    public String getScope() {
+    /**
+     * Get effective scope (own or inherited).
+     *
+     * @return the scope
+     */
+    public String getEffectiveScope() {
         if (scope == null) {
             if (inheritedScope == null) {
                 return "instance";
@@ -39,6 +59,11 @@ public class ObjectData {
         }
     }
 
+    /**
+     * Get printable scope (own or inherited).
+     *
+     * @return the printable scope
+     */
     public String getPrintableScope() {
         if (scope == null) {
             if (inheritedScope == null) {
@@ -51,14 +76,20 @@ public class ObjectData {
         }
     }
 
+    /**
+     * Set inherited scope.
+     *
+     * @param scope the scope
+     */
     public void setInheritedScope(@Nullable String scope) {
         this.inheritedScope = scope;
     }
 
-    public String getInheritedScope() {
-        return inheritedScope;
-    }
-
+    /**
+     * Get associated values.
+     *
+     * @return the values
+     */
     public List<ObjectValue> getValues() {
         return objectValues;
     }

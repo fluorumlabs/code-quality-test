@@ -4,11 +4,11 @@ import javax.servlet.*;
 import javax.servlet.http.HttpSession;
 
 /**
- * Created by Artem Godin on 9/28/2020.
+ * {@link Engine} with Spring and Servlet support
  */
 public class SpringServletEngine extends SpringEngine {
     @Override
-    public String getRealmFromAnnotations(Class<?> clazz) {
+    public String detectScope(Class<?> clazz) {
         if (Servlet.class.isAssignableFrom(clazz)
                 || Filter.class.isAssignableFrom(clazz)
                 || ServletContext.class.isAssignableFrom(clazz)
@@ -25,11 +25,11 @@ public class SpringServletEngine extends SpringEngine {
             return "request";
         }
 
-        return super.getRealmFromAnnotations(clazz);
+        return super.detectScope(clazz);
     }
 
     @Override
-    public String getName() {
-        return super.getName()+"-servlet";
+    public String getVersion() {
+        return super.getVersion()+"-servlet";
     }
 }

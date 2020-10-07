@@ -1,15 +1,13 @@
 package org.vaadin.qa.cqt.suites;
 
-import org.vaadin.qa.cqt.Reference;
-import org.vaadin.qa.cqt.ReferenceType;
+import org.vaadin.qa.cqt.data.Reference;
+import org.vaadin.qa.cqt.data.ReferenceType;
 import org.vaadin.qa.cqt.Suite;
 import org.vaadin.qa.cqt.annotations.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.WeakHashMap;
