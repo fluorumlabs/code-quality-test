@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -178,7 +179,7 @@ public class CodeQualityTestServer {
 
             try (PrintWriter output = new PrintWriter(exchange.getResponseBody(), true)) {
                 output.println("<!DOCTYPE html><html><base href='.'>");
-                output.println("<title>Poo Fighter -- CQT Server " + EngineInstance.get().getName() + "</title>");
+                output.println("<title>CQT Server " + EngineInstance.get().getName() + "</title>");
                 output.println("<style>\n" +
                         "    body {\n" +
                         "        font-size: 16px;\n" +
@@ -187,6 +188,10 @@ public class CodeQualityTestServer {
                         "        background-color: #fff;\n" +
                         "        color: #000;\n" +
                         "        box-sizing: border-box;\n" +
+                        "    }\n" +
+                        "    \n" +
+                        "    * {\n" +
+                        "        transition: all 200ms;\n" +
                         "    }\n" +
                         "\n" +
                         "    pre {\n" +
@@ -248,8 +253,23 @@ public class CodeQualityTestServer {
                         "    }\n" +
                         "\n" +
                         "    .banner {\n" +
-                        "        font-weight: bold;\n" +
+                        "        position: fixed;\n" +
+                        "        left: 0;\n" +
+                        "        right: 0;\n" +
+                        "        top: 0;\n" +
+                        "        background-color: #1a2843;\n" +
+                        "        color: white;\n" +
+                        "        padding: 1.2rem;\n" +
+                        "        box-shadow: 0 0 10px black;\n" +
+                        "        display: flex;\n" +
+                        "    " +
+                        "}\n" +
+                        "    \n" +
+                        "    .banner .application {\n" +
+                        "        flex-grow: 1;\n" +
+                        "        padding: 4px;\n" +
                         "    }\n" +
+                        "    \n" +
                         "\n" +
                         "    .report .message {\n" +
                         "        font-weight: bold;\n" +
@@ -257,13 +277,13 @@ public class CodeQualityTestServer {
                         "\n" +
                         "    .report .buttons {\n" +
                         "        opacity: 0;\n" +
-                        "        transition: opacity 0.2s;\n" +
                         "    }\n" +
                         "\n" +
                         "    .block {\n" +
                         "        display: block;\n" +
                         "        overflow-x: hidden;\n" +
                         "        text-overflow: ellipsis;\n" +
+                        "        margin-bottom: 1.2rem;\n" +
                         "    " +
                         "}\n" +
                         "\n" +
@@ -305,7 +325,6 @@ public class CodeQualityTestServer {
                         "\n" +
                         "    a, a * {\n" +
                         "        color: currentColor;\n" +
-                        "        transition: color 200ms, background-color 200ms;\n" +
                         "    }\n" +
                         "\n" +
                         "    a:hover, a:hover * {\n" +
@@ -338,7 +357,7 @@ public class CodeQualityTestServer {
                         "</style>");
                 output.println("</head><body><pre>");
 
-                preamble(output);
+                banner(output);
 
                 try {
                     boolean needToRunScanner = !resultsAreReady.get() && !scannerIsRunning.get();
@@ -464,9 +483,9 @@ public class CodeQualityTestServer {
 
                     foundSomething = true;
                     if (previousResults.contains(currentResult)) {
-                        output.println("<span class='block same'>" + currentResult + "</span>");
+                        output.print("<span class='block same'>" + currentResult + "</span>");
                     } else {
-                        output.println("<span class='block updated'>" + currentResult + "</span>");
+                        output.print("<span class='block updated'>" + currentResult + "</span>");
                     }
                 }
 
@@ -476,8 +495,8 @@ public class CodeQualityTestServer {
             }
         }
 
-        private void preamble(PrintWriter output) {
-            output.println("<span class='banner'>Code Quality Test Server (" + EngineInstance.get().getName() + ")</span>");
+        private void banner(PrintWriter output) {
+            output.println("<span class='banner'><span class='application'>Code Quality Test Server (" + EngineInstance.get().getName() + ")</span></span>");
             output.println();
         }
 

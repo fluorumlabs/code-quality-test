@@ -39,9 +39,9 @@ public class CollectionInspections extends Suite {
             }
 
             Field field;
-            if (Classes.SYNCHRONIZED_MAP.isAssignableFrom(reference.getTargetClass())) {
+            if (SYNCHRONIZED_MAP.isAssignableFrom(reference.getTargetClass())) {
                 field = UNDERLYING_MAP_FIELD;
-            } else if (Classes.SET_FROM_MAP.isAssignableFrom(reference.getTargetClass())) {
+            } else if (SET_FROM_MAP.isAssignableFrom(reference.getTargetClass())) {
                 field = UNDERLYING_SET_FROM_MAP_FIELD;
             } else {
                 return false;
@@ -261,7 +261,7 @@ public class CollectionInspections extends Suite {
     @Advice("Use non-blocking ConcurrentSkipListMap instead of Collections.synchronizedMap(TreeMap)")
     public Predicate<Reference> cslmForSynchronizedTreeMap() {
         return and(
-                targetType(is(Classes.SYNCHRONIZED_MAP)),
+                targetType(is(SYNCHRONIZED_MAP)),
                 underlyingMap(is(TreeMap.class)),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
@@ -388,22 +388,8 @@ public class CollectionInspections extends Suite {
                 ownerType(isNotPrivateClass()),
                 targetType(is(Collection.class, Map.class), isNot(UNMODIFIABLE_COLLECTIONS)),
                 fieldIsExposedForReading(),
+                field(type(isNot(UNMODIFIABLE_COLLECTIONS))),
                 referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
         );
     }
-
-    /**
-     * @return
-     */
-    @Warning("Array exposed via non-private field or non-private getter")
-    @Scopes({"static", "singleton", "session"})
-    public Predicate<Reference> exposedArray() {
-        return and(
-                ownerType(isNotPrivateClass()),
-                targetType(isArray()),
-                fieldIsExposedForReading(),
-                referenceTypeIs(ReferenceType.ACTUAL_VALUE, ReferenceType.POSSIBLE_VALUE)
-        );
-    }
-
 }

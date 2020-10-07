@@ -29,7 +29,7 @@ public class Scanner {
     private final Map<Object, ObjectData> visitedObjects = new IdentityHashMap<>();
     private final Map<Object, List<Reference>> backreferences = new IdentityHashMap<>();
     private final Map<String, Map<String, Set<PossibleValue>>> computedPotentialValues = new HashMap<>();
-    private final Queue<Class<?>> classes = new ArrayDeque<>();
+    private final Collection<Class<?>> classes = new ArrayDeque<>();
     private final Predicate<Class<?>> filter;
     private final List<Inspection> inspections = new ArrayList<>();
     private PrintWriter output;
@@ -243,7 +243,7 @@ public class Scanner {
                     scopeStats.computeIfAbsent(entry.getValue().getScope(), s -> new AtomicInteger(0)).incrementAndGet();
                     propagationQueue.add(entry.getKey());
                 });
-        long stamp = System.nanoTime() - DISPLAY_INTERVAL;
+        long stamp = System.nanoTime();
         Object objectToVisit = propagationQueue.poll();
         while (objectToVisit != null) {
             long now = System.nanoTime();

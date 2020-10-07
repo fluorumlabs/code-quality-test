@@ -44,6 +44,7 @@ public final class Classes {
     public static final Class<?> SINGLETON_MAP = Collections.singletonMap(DUMMY_ENUM.WHATEVER, DUMMY_ENUM.WHATEVER).getClass();
 
     public static final Class<?>[] UNMODIFIABLE_COLLECTIONS = {
+            Iterable.class,
             EMPTY_LIST,
             EMPTY_SET,
             EMPTY_SORTED_SET,
