@@ -7,14 +7,8 @@ import org.springframework.context.event.ApplicationContextEvent;
 /**
  * The type Context listener to intercept Spring {@code ApplicationContext} instance.
  */
-public class ContextListener implements ApplicationListener<ApplicationContextEvent> {
-    private static ApplicationContext context;
-
-    @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-    @Override
-    public void onApplicationEvent(ApplicationContextEvent event) {
-        context = event.getApplicationContext();
-    }
+public class ContextListener
+        implements ApplicationListener<ApplicationContextEvent> {
 
     /**
      * Gets Spring {@code ApplicationContext}.
@@ -24,4 +18,13 @@ public class ContextListener implements ApplicationListener<ApplicationContextEv
     public static ApplicationContext getContext() {
         return context;
     }
+
+    @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+    @Override
+    public void onApplicationEvent(ApplicationContextEvent event) {
+        context = event.getApplicationContext();
+    }
+
+    private static ApplicationContext context;
+
 }

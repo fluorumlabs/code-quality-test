@@ -13,11 +13,6 @@ import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
  * Inspection result definition.
  */
 public class InspectionResult {
-    private static final HtmlFormatter CATEGORY_FORMAT = value().escapeHtml().styled("category");
-    private static final HtmlFormatter MESSAGE_FORMAT = value().escapeHtml().styled("message");
-
-    private final Inspection inspection;
-    private final List<Reference> references = new ArrayList<>();
 
     /**
      * Instantiate a new inspection result.
@@ -41,7 +36,6 @@ public class InspectionResult {
      * Test if inspection result has any associated references.
      *
      * @return the boolean
-     *
      * @see InspectionResult#add(Reference)
      */
     public boolean hasReferences() {
@@ -61,38 +55,79 @@ public class InspectionResult {
 
         Map<String, List<Reference>> referenceGroup = new HashMap<>();
         for (Reference reference : references) {
-            referenceGroup.computeIfAbsent(reference.getId(), str -> new ArrayList<>()).add(reference);
+            referenceGroup
+                    .computeIfAbsent(reference.getId(),
+                                     str -> new ArrayList<>()
+                    )
+                    .add(reference);
         }
 
-        List<String> groups = referenceGroup.keySet().stream()
+        List<String> groups = referenceGroup
+                .keySet()
+                .stream()
                 .sorted()
                 .collect(Collectors.toList());
 
         for (String group : groups) {
-            StringBuilder output = new StringBuilder();
+            StringBuilder   output            = new StringBuilder();
             List<Reference> referencesInGroup = referenceGroup.get(group);
             Reference first = referencesInGroup.iterator().next();
 
-            String descriptor = encodeValue("[" + inspection.getId() + "] " + first.getId());
+            String descriptor = encodeValue("["
+                                                    + inspection.getId()
+                                                    + "] "
+                                                    + first.getId());
 
-            output.append("<!-- Class: ").append(encodeValue(first.getOwnerClass().getName())).append(" --><!-- Descriptor: ").append(descriptor).append(" -->");
-            output.append(value().styled("report " + inspection.getLevel().name().toLowerCase(Locale.ENGLISH)).format(String.format("%s%s%s %s\n",
-                    CATEGORY_FORMAT.format(inspection.getCategory()),
-                    "<span class='separator'>: </span>",
-                    MESSAGE_FORMAT.format(inspection.getMessage()),
-                    "<span class='buttons'><a href='#' onclick='self.event.preventDefault(); comment = prompt(\"This report will be marked as suppressed for selected class/field in \\x2E\\uD835\\uDE8C\\uD835\\uDE9A\\uD835\\uDE9D\\uD835\\uDE92\\uD835\\uDE90\\uD835\\uDE97\\uD835\\uDE98\\uD835\\uDE9B\\uD835\\uDE8E file and will not appear in future scans.\\n\\nExplanation (required):\", \"False positive\"); if (comment !== null && comment.trim() !== \"\") fetch(\"suppress?\"+encodeURIComponent(\"# \"+comment+\"\\n\")+\"" + descriptor + "\").then(() => self.location.reload());'>Suppress</a></span>")));
+            String reportTitle
+                    = CATEGORY_FORMAT.format(inspection.getCategory())
+                    + "<span class='separator'>: </span>"
+                    + MESSAGE_FORMAT.format(inspection.getMessage())
+                    + " <span class='buttons'><a href='#' onclick='self.event.preventDefault(); comment = prompt(\"This report will be marked as suppressed for selected class/field in \\x2E\\uD835\\uDE8C\\uD835\\uDE9A\\uD835\\uDE9D\\uD835\\uDE92\\uD835\\uDE90\\uD835\\uDE97\\uD835\\uDE98\\uD835\\uDE9B\\uD835\\uDE8E file and will not appear in future scans.\\n\\nExplanation (required):\", \"False positive\"); if (comment !== null && comment.trim() !== \"\") fetch(\"suppress?\"+encodeURIComponent(\"# \"+comment+\"\\n\")+\""
+                    + descriptor
+                    + "\").then(() => self.location.reload());'>Suppress</a></span>\n";
+
+            output
+                    .append("<!-- Class: ")
+                    .append(encodeValue(first.getOwnerClass().getName()))
+                    .append(" --><!-- Descriptor: ")
+                    .append(descriptor)
+                    .append(" -->");
+            output.append(value()
+                                  .styled("report " + inspection
+                                          .getLevel()
+                                          .name()
+                                          .toLowerCase(Locale.ENGLISH))
+                                  .format(reportTitle));
             String contextPath = first.formatPathToScopeRoot();
-            output.append(String.format("\t\tClass:         <a href='/%s/'>%s</a>\n", encodeValue(first.getOwnerClass().getName()), first.formatOwnerClass()));
-            output.append(String.format("\t\tContext:       %s\n", first.formatScope()));
+            output.append(String.format(
+                    "\t\tClass:         <a href='/%s/'>%s</a>\n",
+                    encodeValue(first.getOwnerClass().getName()),
+                    first.formatOwnerClass()
+            ));
+            output.append(String.format("\t\tContext:       %s\n",
+                                        first.formatScope()
+            ));
             if (!contextPath.isEmpty()) {
-                output.append(String.format("\t\tContext path:  %s\n", contextPath));
+                output.append(String.format("\t\tContext path:  %s\n",
+                                            contextPath
+                ));
             }
-            output.append(String.format("\t\tField:         %s\n", first.formatField()));
-            output.append(String.format("\t\tValue:         %s\n", first.formatValue()));
+            output.append(String.format("\t\tField:         %s\n",
+                                        first.formatField()
+            ));
+            output.append(String.format("\t\tValue:         %s\n",
+                                        first.formatValue()
+            ));
             if (referencesInGroup.size() > 1) {
-                output.append(String.format("\t\t               ... %d other\n", referencesInGroup.size() - 1));
+                output.append(String.format("\t\t               ... %d other\n",
+                                            referencesInGroup.size() - 1
+                ));
             }
-            List<String> backrefs = referencesInGroup.stream().flatMap(reference -> reference.formatBackreferences().stream())
+            List<String> backrefs = referencesInGroup
+                    .stream()
+                    .flatMap(reference -> reference
+                            .formatBackreferences()
+                            .stream())
                     .sorted()
                     .distinct()
                     .collect(Collectors.toList());
@@ -100,13 +135,20 @@ public class InspectionResult {
             int counter = 0;
             for (String backref : backrefs) {
                 if (counter == 0) {
-                    output.append(String.format("\t\tReferenced by: %s\n", backref));
+                    output.append(String.format("\t\tReferenced by: %s\n",
+                                                backref
+                    ));
                 } else {
-                    output.append(String.format("\t\t               %s\n", backref));
+                    output.append(String.format("\t\t               %s\n",
+                                                backref
+                    ));
                 }
                 counter++;
                 if (counter > first.getScanner().getMaxReferences()) {
-                    output.append(String.format("\t\t               ... %d more\n", backrefs.size() - counter));
+                    output.append(String.format(
+                            "\t\t               ... %d more\n",
+                            backrefs.size() - counter
+                    ));
                     break;
                 }
             }
@@ -114,25 +156,6 @@ public class InspectionResult {
             results.add(output.toString());
         }
         return results;
-    }
-
-
-    /**
-     * Get inspection severity level.
-     *
-     * @return the inspection severity level
-     */
-    public Level getInspectionLevel() {
-        return inspection.getLevel();
-    }
-
-    /**
-     * Get inspection id.
-     *
-     * @return the inspection id
-     */
-    public String getInspectionId() {
-        return inspection.getId();
     }
 
     /**
@@ -145,6 +168,24 @@ public class InspectionResult {
     }
 
     /**
+     * Get inspection id.
+     *
+     * @return the inspection id
+     */
+    public String getInspectionId() {
+        return inspection.getId();
+    }
+
+    /**
+     * Get inspection severity level.
+     *
+     * @return the inspection severity level
+     */
+    public Level getInspectionLevel() {
+        return inspection.getLevel();
+    }
+
+    /**
      * Get inspection message.
      *
      * @return the inspection message
@@ -152,4 +193,17 @@ public class InspectionResult {
     public String getInspectionMessage() {
         return inspection.getMessage();
     }
+
+    private static final HtmlFormatter CATEGORY_FORMAT = value()
+            .escapeHtml()
+            .styled("category");
+
+    private static final HtmlFormatter MESSAGE_FORMAT = value()
+            .escapeHtml()
+            .styled("message");
+
+    private final Inspection inspection;
+
+    private final List<Reference> references = new ArrayList<>();
+
 }

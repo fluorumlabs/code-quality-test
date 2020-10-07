@@ -10,6 +10,7 @@ import java.util.concurrent.*;
  * Classes helpers.
  */
 public final class Classes {
+
     /**
      * Boxed primitives or String.
      */
@@ -24,82 +25,133 @@ public final class Classes {
             Boolean.class,
             String.class
     };
+
     /**
      * Class of Collections.emptyList().
      */
-    public static final Class<?> EMPTY_LIST = Collections.emptyList().getClass();
+    public static final Class<?> EMPTY_LIST = Collections
+            .emptyList()
+            .getClass();
+
     /**
      * Class of Collections.emptyMap().
      */
     public static final Class<?> EMPTY_MAP = Collections.emptyMap().getClass();
+
     /**
      * Class of Collections.emptyNavigableMap().
      */
-    public static final Class<?> EMPTY_NAVIGABLE_MAP = Collections.emptyNavigableMap().getClass();
+    public static final Class<?> EMPTY_NAVIGABLE_MAP = Collections
+            .emptyNavigableMap()
+            .getClass();
+
     /**
      * Class of Collections.emptyNavigableSet().
      */
-    public static final Class<?> EMPTY_NAVIGABLE_SET = Collections.emptyNavigableSet().getClass();
+    public static final Class<?> EMPTY_NAVIGABLE_SET = Collections
+            .emptyNavigableSet()
+            .getClass();
+
     /**
      * Class of Collections.emptySet().
      */
     public static final Class<?> EMPTY_SET = Collections.emptySet().getClass();
+
     /**
      * Class of Collections.emptySortedMap().
      */
-    public static final Class<?> EMPTY_SORTED_MAP = Collections.emptySortedMap().getClass();
+    public static final Class<?> EMPTY_SORTED_MAP = Collections
+            .emptySortedMap()
+            .getClass();
+
     /**
      * Class of Collections.emptySortedSet().
      */
-    public static final Class<?> EMPTY_SORTED_SET = Collections.emptySortedSet().getClass();
+    public static final Class<?> EMPTY_SORTED_SET = Collections
+            .emptySortedSet()
+            .getClass();
+
     /**
      * Class of Collections.newSetFromMap().
      */
-    public static final Class<?> SET_FROM_MAP = getInnerClass(Collections.class, "SetFromMap");
+    public static final Class<?> SET_FROM_MAP = getInnerClass(Collections.class,
+                                                              "SetFromMap"
+    );
+
     /**
      * Class of Collections.singleton().
      */
-    public static final Class<?> SINGLETON = Collections.singleton(DUMMY_ENUM.WHATEVER).getClass();
+    public static final Class<?> SINGLETON = Collections
+            .singleton(DUMMY_ENUM.WHATEVER)
+            .getClass();
+
     /**
      * Class of Collections.singletonList().
      */
-    public static final Class<?> SINGLETON_LIST = Collections.singletonList(DUMMY_ENUM.WHATEVER).getClass();
+    public static final Class<?> SINGLETON_LIST = Collections
+            .singletonList(DUMMY_ENUM.WHATEVER)
+            .getClass();
+
     /**
      * Class of Collections.singletonMap().
      */
-    public static final Class<?> SINGLETON_MAP = Collections.singletonMap(DUMMY_ENUM.WHATEVER, DUMMY_ENUM.WHATEVER).getClass();
+    public static final Class<?> SINGLETON_MAP = Collections
+            .singletonMap(DUMMY_ENUM.WHATEVER, DUMMY_ENUM.WHATEVER)
+            .getClass();
+
     /**
      * Collections.SynchronizedCollection.class.
      */
-    public static final Class<?> SYNCHRONIZED_COLLECTION = getInnerClass(Collections.class, "SynchronizedCollection");
+    public static final Class<?> SYNCHRONIZED_COLLECTION = getInnerClass(Collections.class,
+                                                                         "SynchronizedCollection"
+    );
+
     /**
      * Collections.SynchronizedList.class.
      */
-    public static final Class<?> SYNCHRONIZED_LIST = getInnerClass(Collections.class, "SynchronizedList");
+    public static final Class<?> SYNCHRONIZED_LIST
+            = getInnerClass(Collections.class, "SynchronizedList");
+
     /**
      * Collections.SynchronizedMap.class.
      */
-    public static final Class<?> SYNCHRONIZED_MAP = getInnerClass(Collections.class, "SynchronizedMap");
+    public static final Class<?> SYNCHRONIZED_MAP
+            = getInnerClass(Collections.class, "SynchronizedMap");
+
     /**
      * Collections.SynchronizedNavigableMap.class.
      */
-    public static final Class<?> SYNCHRONIZED_NAVIGABLE_MAP = getInnerClass(Collections.class, "SynchronizedNavigableMap");
+    public static final Class<?> SYNCHRONIZED_NAVIGABLE_MAP = getInnerClass(Collections.class,
+                                                                            "SynchronizedNavigableMap"
+    );
+
     /**
      * Collections.SynchronizedNavigableSet.class.
      */
-    public static final Class<?> SYNCHRONIZED_NAVIGABLE_SET = getInnerClass(Collections.class, "SynchronizedNavigableSet");
+    public static final Class<?> SYNCHRONIZED_NAVIGABLE_SET = getInnerClass(Collections.class,
+                                                                            "SynchronizedNavigableSet"
+    );
+
     /**
      * Collections.SynchronizedSet.class.
      */
-    public static final Class<?> SYNCHRONIZED_SET = getInnerClass(Collections.class, "SynchronizedSet");
+    public static final Class<?> SYNCHRONIZED_SET
+            = getInnerClass(Collections.class, "SynchronizedSet");
+
     /**
      * Collections.SynchronizedSortedMap.class.
      */
-    public static final Class<?> SYNCHRONIZED_SORTED_MAP = getInnerClass(Collections.class, "SynchronizedSortedMap");
+    public static final Class<?> SYNCHRONIZED_SORTED_MAP = getInnerClass(Collections.class,
+                                                                         "SynchronizedSortedMap"
+    );
+
     /**
      * Collections.SynchronizedSortedSet.class.
      */
-    public static final Class<?> SYNCHRONIZED_SORTED_SET = getInnerClass(Collections.class, "SynchronizedSortedSet");
+    public static final Class<?> SYNCHRONIZED_SORTED_SET = getInnerClass(Collections.class,
+                                                                         "SynchronizedSortedSet"
+    );
+
     /**
      * Thread safe collections.
      */
@@ -120,31 +172,47 @@ public final class Classes {
             CopyOnWriteArrayList.class,
             SYNCHRONIZED_COLLECTION,
             SYNCHRONIZED_MAP,
-    };
+            };
+
     /**
      * Collections.UnmodifiableCollection.class
      */
-    public static final Class<?> UNMODIFIABLE_COLLECTION = getInnerClass(Collections.class, "UnmodifiableCollection");
+    public static final Class<?> UNMODIFIABLE_COLLECTION = getInnerClass(Collections.class,
+                                                                         "UnmodifiableCollection"
+    );
+
     /**
      * Collections.UnmodifiableList.class.
      */
-    public static final Class<?> UNMODIFIABLE_LIST = getInnerClass(Collections.class, "UnmodifiableList");
+    public static final Class<?> UNMODIFIABLE_LIST
+            = getInnerClass(Collections.class, "UnmodifiableList");
+
     /**
      * Collections.UnmodifiableMap.class.
      */
-    public static final Class<?> UNMODIFIABLE_MAP = getInnerClass(Collections.class, "UnmodifiableMap");
+    public static final Class<?> UNMODIFIABLE_MAP
+            = getInnerClass(Collections.class, "UnmodifiableMap");
+
     /**
      * Collections.UnmodifiableNavigableMap.class.
      */
-    public static final Class<?> UNMODIFIABLE_NAVIGABLE_MAP = getInnerClass(Collections.class, "UnmodifiableNavigableMap");
+    public static final Class<?> UNMODIFIABLE_NAVIGABLE_MAP = getInnerClass(Collections.class,
+                                                                            "UnmodifiableNavigableMap"
+    );
+
     /**
      * Collections.UnmodifiableNavigableSet.class.
      */
-    public static final Class<?> UNMODIFIABLE_NAVIGABLE_SET = getInnerClass(Collections.class, "UnmodifiableNavigableSet");
+    public static final Class<?> UNMODIFIABLE_NAVIGABLE_SET = getInnerClass(Collections.class,
+                                                                            "UnmodifiableNavigableSet"
+    );
+
     /**
      * Collections.UnmodifiableSet.class.
      */
-    public static final Class<?> UNMODIFIABLE_SET = getInnerClass(Collections.class, "UnmodifiableSet");
+    public static final Class<?> UNMODIFIABLE_SET
+            = getInnerClass(Collections.class, "UnmodifiableSet");
+
     /**
      * Unmodifiable collections.
      */
@@ -164,14 +232,20 @@ public final class Classes {
             SINGLETON_LIST,
             SINGLETON_MAP
     };
+
     /**
      * Collections.UnmodifiableSortedMap.class.
      */
-    public static final Class<?> UNMODIFIABLE_SORTED_MAP = getInnerClass(Collections.class, "UnmodifiableSortedMap");
+    public static final Class<?> UNMODIFIABLE_SORTED_MAP = getInnerClass(Collections.class,
+                                                                         "UnmodifiableSortedMap"
+    );
+
     /**
      * Collections.UnmodifiableSortedSet.class.
      */
-    public static final Class<?> UNMODIFIABLE_SORTED_SET = getInnerClass(Collections.class, "UnmodifiableSortedSet");
+    public static final Class<?> UNMODIFIABLE_SORTED_SET = getInnerClass(Collections.class,
+                                                                         "UnmodifiableSortedSet"
+    );
 
     private static Class<?> getInnerClass(Class<?> outer, String name) {
         for (Class<?> declaredClass : outer.getDeclaredClasses()) {
@@ -179,7 +253,10 @@ public final class Classes {
                 return declaredClass;
             }
         }
-        throw new IllegalArgumentException("Cannot find inner class " + name + " in " + outer.getName());
+        throw new IllegalArgumentException("Cannot find inner class "
+                                                   + name
+                                                   + " in "
+                                                   + outer.getName());
     }
 
 
@@ -192,4 +269,5 @@ public final class Classes {
          */
         WHATEVER
     }
+
 }

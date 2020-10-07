@@ -8,9 +8,6 @@ import java.util.Objects;
  * Possible value of object
  */
 public class PossibleValue {
-    private final Class<?> type;
-    private final Class<?> owner;
-    private final List<String> methods;
 
     /**
      * Instantiates a new possible value.
@@ -19,18 +16,44 @@ public class PossibleValue {
      * @param owner the owner object class
      */
     public PossibleValue(Class<?> type, Class<?> owner) {
-        this.type = type;
-        this.owner = owner;
+        this.type    = type;
+        this.owner   = owner;
         this.methods = new ArrayList<>();
     }
 
     /**
-     * Get object type.
+     * Add method that can write object of specific type to the field.
      *
-     * @return the type
+     * @param method the method
      */
-    public Class<?> getType() {
-        return type;
+    public void addMethod(String method) {
+        methods.add(method);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, owner);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PossibleValue that = (PossibleValue) o;
+        return type.equals(that.type) && owner.equals(that.owner);
+    }
+
+    /**
+     * Get list of methods that can write object of specific type to the field.
+     *
+     * @return the methods
+     */
+    public List<String> getMethods() {
+        return methods;
     }
 
     /**
@@ -43,34 +66,18 @@ public class PossibleValue {
     }
 
     /**
-     * Add method that can write object of specific type to the field.
+     * Get object type.
      *
-     * @param method the method
+     * @return the type
      */
-    public void addMethod(String method) {
-        methods.add(method);
+    public Class<?> getType() {
+        return type;
     }
 
-    /**
-     * Get list of methods that can write object of specific type to the field.
-     *
-     * @return the methods
-     */
-    public List<String> getMethods() {
-        return methods;
-    }
+    private final List<String> methods;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PossibleValue that = (PossibleValue) o;
-        return type.equals(that.type) &&
-                owner.equals(that.owner);
-    }
+    private final Class<?> owner;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, owner);
-    }
+    private final Class<?> type;
+
 }

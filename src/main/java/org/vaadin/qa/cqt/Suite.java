@@ -29,7 +29,9 @@ import java.util.stream.Stream;
 /**
  * All inspection suites must extend this class.
  */
-public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypePredicates, MemberPredicates {
+public class Suite
+        implements AnnotatedElementPredicates, FieldPredicates, TypePredicates, MemberPredicates {
+
     /**
      * AND predicate.
      *
@@ -47,7 +49,10 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> backreference(Predicate<Reference> referencePredicate) {
-        return reference -> scanner.getBackreferences(reference.getOwner()).stream().anyMatch(referencePredicate);
+        return reference -> scanner
+                .getBackreferences(reference.getOwner())
+                .stream()
+                .anyMatch(referencePredicate);
     }
 
     /**
@@ -57,7 +62,10 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> backreference(Predicate<Reference>... referencePredicates) {
-        return reference -> scanner.getBackreferences(reference.getOwner()).stream().anyMatch(and(referencePredicates));
+        return reference -> scanner
+                .getBackreferences(reference.getOwner())
+                .stream()
+                .anyMatch(and(referencePredicates));
     }
 
     /**
@@ -67,7 +75,9 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Field> calledByNonClassInit(String... methodNames) {
-        return field -> new CallFinder(field, Arrays.asList(methodNames)).calledByNot("<clinit>");
+        return field -> new CallFinder(field,
+                                       Arrays.asList(methodNames)
+        ).calledByNot("<clinit>");
     }
 
     /**
@@ -77,7 +87,9 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Field> calledByNonConstructor(String... methodNames) {
-        return field -> new CallFinder(field, Arrays.asList(methodNames)).calledByNot("<init>");
+        return field -> new CallFinder(field,
+                                       Arrays.asList(methodNames)
+        ).calledByNot("<init>");
     }
 
     /**
@@ -113,16 +125,12 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> fieldIsExposedForReading() {
-        return field(
-                isReadInOtherClasses().or(isPublic()).or(isProtected())
-        ).or(
-                fieldIsExposedViaGetter().and(
-                        field(getter(
-                                isCalledFromOtherClasses().or(isPublic()).or(isProtected())
-                                )
-                        )
-                )
-        );
+        return field(isReadInOtherClasses()
+                             .or(isPublic())
+                             .or(isProtected())).or(fieldIsExposedViaGetter().and(
+                field(getter(isCalledFromOtherClasses()
+                                     .or(isPublic())
+                                     .or(isProtected())))));
     }
 
     /**
@@ -138,14 +146,10 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> fieldIsExposedForUpdating() {
-        return field(
-                isUpdatedInOtherClasses().or(isPublic()).or(isProtected())
-        ).or(
-                field(setter(
-                        isCalledFromOtherClasses().or(isPublic()).or(isProtected())
-                        )
-                )
-        );
+        return field(isUpdatedInOtherClasses().or(isPublic()).or(isProtected()))
+                .or(field(setter(isCalledFromOtherClasses()
+                                         .or(isPublic())
+                                         .or(isProtected()))));
     }
 
     /**
@@ -161,7 +165,8 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
             return field(getter(method -> {
                 try {
                     method.setAccessible(true);
-                    return method.invoke(reference.getOwner()) == reference.getTarget();
+                    return method.invoke(reference.getOwner())
+                            == reference.getTarget();
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     return false;
                 }
@@ -333,7 +338,8 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> ownerType(Predicate<Class<?>> rule) {
-        return reference -> reference.getOwnerClass() != null && rule.test(reference.getOwnerClass());
+        return reference -> reference.getOwnerClass() != null && rule.test(
+                reference.getOwnerClass());
     }
 
     /**
@@ -343,7 +349,9 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIs(ReferenceType first) {
-        return reference -> EnumSet.of(first).contains(reference.getReferenceType());
+        return reference -> EnumSet
+                .of(first)
+                .contains(reference.getReferenceType());
     }
 
     /**
@@ -353,8 +361,11 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @param referenceTypes the reference types
      * @return the predicate
      */
-    public Predicate<Reference> referenceTypeIs(ReferenceType first, ReferenceType... referenceTypes) {
-        return reference -> EnumSet.of(first, referenceTypes).contains(reference.getReferenceType());
+    public Predicate<Reference> referenceTypeIs(ReferenceType first,
+                                                ReferenceType... referenceTypes) {
+        return reference -> EnumSet
+                .of(first, referenceTypes)
+                .contains(reference.getReferenceType());
     }
 
     /**
@@ -364,7 +375,9 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIsNot(ReferenceType first) {
-        return reference -> !EnumSet.of(first).contains(reference.getReferenceType());
+        return reference -> !EnumSet
+                .of(first)
+                .contains(reference.getReferenceType());
     }
 
     /**
@@ -374,8 +387,11 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @param referenceTypes the reference types
      * @return the predicate
      */
-    public Predicate<Reference> referenceTypeIsNot(ReferenceType first, ReferenceType... referenceTypes) {
-        return reference -> !EnumSet.of(first, referenceTypes).contains(reference.getReferenceType());
+    public Predicate<Reference> referenceTypeIsNot(ReferenceType first,
+                                                   ReferenceType... referenceTypes) {
+        return reference -> !EnumSet
+                .of(first, referenceTypes)
+                .contains(reference.getReferenceType());
     }
 
     /**
@@ -398,25 +414,32 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
             if (method.getAnnotation(Disabled.class) != null) {
                 continue;
             }
-            Optional<Annotation> report = Arrays.stream(method.getDeclaredAnnotations())
-                    .filter(annotation -> annotation.annotationType().getAnnotation(Report.class) != null)
+            Optional<Annotation> report = Arrays
+                    .stream(method.getDeclaredAnnotations())
+                    .filter(annotation -> annotation
+                            .annotationType()
+                            .getAnnotation(Report.class) != null)
                     .findFirst();
             report.ifPresent(annotation -> {
-                Report reportAnnotation = annotation.annotationType().getAnnotation(Report.class);
+                Report reportAnnotation = annotation
+                        .annotationType()
+                        .getAnnotation(Report.class);
                 Scopes scopes = method.getAnnotation(Scopes.class);
                 Predicate<Reference> preFilter = null;
 
                 if (scopes != null && scopes.value().length > 0) {
-                    Optional<Predicate<Reference>> filter = Stream.of(scopes.value())
-                            .<Predicate<Reference>>map(scope -> (Reference reference) -> scope.equals(reference.getScope()))
-                            .reduce(Predicate::or);
+                    Optional<Predicate<Reference>> filter
+                            = Stream.of(scopes.value()).<Predicate<Reference>>map(
+                            scope -> (Reference reference) -> scope.equals(
+                                    reference.getScope())).reduce(Predicate::or);
                     preFilter = filter.get();
                 }
 
                 if (scopes != null && scopes.exclude().length > 0) {
-                    Optional<Predicate<Reference>> filter = Stream.of(scopes.exclude())
-                            .<Predicate<Reference>>map(scope -> (Reference reference) -> !scope.equals(reference.getScope()))
-                            .reduce(Predicate::and);
+                    Optional<Predicate<Reference>> filter
+                            = Stream.of(scopes.exclude()).<Predicate<Reference>>map(
+                            scope -> (Reference reference) -> !scope.equals(
+                                    reference.getScope())).reduce(Predicate::and);
                     if (preFilter == null) {
                         preFilter = filter.get();
                     } else {
@@ -425,14 +448,27 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
                 }
 
                 try {
-                    Predicate<Reference> predicate = (Predicate<Reference>) method.invoke(this);
+                    Predicate<Reference> predicate
+                            = (Predicate<Reference>) method.invoke(this);
                     if (preFilter != null) {
                         predicate = preFilter.and(predicate);
                     }
-                    String message = (String) annotation.annotationType().getMethod("value").invoke(annotation);
-                    inspections.add(new Inspection(reportAnnotation.level(), predicate, reportAnnotation.name(), message, getClass().getSimpleName() + "." + method.getName()));
+                    String message = (String) annotation
+                            .annotationType()
+                            .getMethod("value")
+                            .invoke(annotation);
+                    inspections.add(new Inspection(reportAnnotation.level(),
+                                                   predicate,
+                                                   reportAnnotation.name(),
+                                                   message,
+                                                   getClass().getSimpleName()
+                                                           + "."
+                                                           + method.getName()
+                    ));
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new IllegalStateException("Cannot import test suite method", e);
+                    throw new IllegalStateException("Cannot import test suite method",
+                                                    e
+                    );
                 }
             });
         }
@@ -466,7 +502,10 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference> referencePredicate) {
-        return reference -> reference.getTarget() != null && scanner.getBackreferences(reference.getTarget()).stream().anyMatch(referencePredicate);
+        return reference -> reference.getTarget() != null && scanner
+                .getBackreferences(reference.getTarget())
+                .stream()
+                .anyMatch(referencePredicate);
     }
 
     /**
@@ -476,7 +515,10 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference>... referencePredicates) {
-        return reference -> reference.getTarget() != null && scanner.getBackreferences(reference.getTarget()).stream().anyMatch(and(referencePredicates));
+        return reference -> reference.getTarget() != null && scanner
+                .getBackreferences(reference.getTarget())
+                .stream()
+                .anyMatch(and(referencePredicates));
     }
 
     /**
@@ -496,7 +538,8 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
      * @return the predicate
      */
     public Predicate<Reference> targetType(Predicate<Class<?>> rule) {
-        return reference -> reference.getTargetClass() != null && rule.test(reference.getTargetClass());
+        return reference -> reference.getTargetClass() != null && rule.test(
+                reference.getTargetClass());
     }
 
     /**
@@ -507,5 +550,7 @@ public class Suite implements AnnotatedElementPredicates, FieldPredicates, TypeP
     public Scanner getScanner() {
         return scanner;
     }
+
     private Scanner scanner;
+
 }

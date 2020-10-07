@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.vaadin.qa.cqt.internals.ScopeDetector;
 import org.vaadin.qa.cqt.engine.spring.ContextListener;
+import org.vaadin.qa.cqt.internals.ScopeDetector;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -19,11 +19,24 @@ import java.util.function.BiConsumer;
  * {@link Engine} with Spring support
  */
 public class SpringEngine extends DefaultEngine {
+
+    @Override
+    public void addSystemObjects(BiConsumer<Object, String> consumer) {
+        ApplicationContext context = ContextListener.getContext();
+        if (context instanceof ConfigurableApplicationContext) {
+            ConfigurableListableBeanFactory clbf
+                    = ((ConfigurableApplicationContext) context).getBeanFactory();
+            for (String singletonName : clbf.getSingletonNames()) {
+                Object singleton = clbf.getSingleton(singletonName);
+                consumer.accept(singleton, "singleton");
+            }
+        }
+    }
+
     @Override
     public String detectScope(Class<?> clazz) {
         if (Component.class.isAssignableFrom(clazz)
-                || ApplicationContext.class.isAssignableFrom(clazz)
-        ) {
+                || ApplicationContext.class.isAssignableFrom(clazz)) {
             return "singleton";
         }
         Annotation[] annotations;
@@ -34,7 +47,8 @@ public class SpringEngine extends DefaultEngine {
             return "";
         }
 
-        boolean isComponent = Arrays.stream(annotations)
+        boolean isComponent = Arrays
+                .stream(annotations)
                 .map(Annotation::annotationType)
                 .filter(cz -> !cz.getName().equals(clazz.getName()))
                 .map(ScopeDetector::detectScope)
@@ -55,18 +69,6 @@ public class SpringEngine extends DefaultEngine {
     }
 
     @Override
-    public void addSystemObjects(BiConsumer<Object, String> consumer) {
-        ApplicationContext context = ContextListener.getContext();
-        if (context instanceof ConfigurableApplicationContext) {
-            ConfigurableListableBeanFactory clbf = ((ConfigurableApplicationContext) context).getBeanFactory();
-            for (String singletonName : clbf.getSingletonNames()) {
-                Object singleton = clbf.getSingleton(singletonName);
-                consumer.accept(singleton, "singleton");
-            }
-        }
-    }
-
-    @Override
     public Object unwrap(Object proxy) {
         while ((AopUtils.isAopProxy(proxy))) {
             try {
@@ -79,13 +81,20 @@ public class SpringEngine extends DefaultEngine {
     }
 
     @Override
-    public String getVersion() {
-        return super.getVersion()+"-spring";
+    public List<String> getScopeOrder() {
+        return Arrays.asList(
+                "request",
+                "session",
+                "singleton",
+                "application",
+                "restart",
+                "static"
+        );
     }
 
     @Override
-    public List<String> getScopeOrder() {
-        return Arrays.asList("request", "session", "singleton", "application", "restart", "static");
+    public String getVersion() {
+        return super.getVersion() + "-spring";
     }
 
 }

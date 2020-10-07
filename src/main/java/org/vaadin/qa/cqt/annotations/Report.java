@@ -13,17 +13,17 @@ import java.lang.annotation.Target;
 public @interface Report {
 
     /**
-     * Report category (for example {@literal "Warning"})
-     *
-     * @return report category
-     */
-    String name();
-
-    /**
      * Report severity level (for example {@link Level#WARNING})
      *
      * @return severity level
      */
     Level level();
+
+    /**
+     * Report category (for example {@literal "Warning"})
+     *
+     * @return report category
+     */
+    String name();
 
 }

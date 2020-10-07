@@ -7,14 +7,14 @@ import javax.servlet.http.HttpSession;
  * {@link Engine} with Spring and Servlet support
  */
 public class SpringServletEngine extends SpringEngine {
+
     @Override
     public String detectScope(Class<?> clazz) {
         if (Servlet.class.isAssignableFrom(clazz)
                 || Filter.class.isAssignableFrom(clazz)
                 || ServletContext.class.isAssignableFrom(clazz)
                 || ServletContextListener.class.isAssignableFrom(clazz)
-                || ServletContainerInitializer.class.isAssignableFrom(clazz)
-        ) {
+                || ServletContainerInitializer.class.isAssignableFrom(clazz)) {
             return "singleton";
         }
         if (HttpSession.class.isAssignableFrom(clazz)) {
@@ -30,6 +30,7 @@ public class SpringServletEngine extends SpringEngine {
 
     @Override
     public String getVersion() {
-        return super.getVersion()+"-servlet";
+        return super.getVersion() + "-servlet";
     }
+
 }

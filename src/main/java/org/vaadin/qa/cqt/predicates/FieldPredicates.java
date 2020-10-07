@@ -15,6 +15,7 @@ import java.util.function.Predicate;
  */
 @SuppressWarnings("unchecked")
 public interface FieldPredicates {
+
     /**
      * Predicate testing if declaring class of {@link Field} is conforms to rules.
      *
@@ -42,7 +43,8 @@ public interface FieldPredicates {
      * @param rules the rules
      * @return the predicate
      */
-    default Predicate<Field> genericType(int index, Predicate<Class<?>>... rules) {
+    default Predicate<Field> genericType(int index,
+                                         Predicate<Class<?>>... rules) {
         return genericType(index, PredicateUtils.and(rules));
     }
 
@@ -57,12 +59,14 @@ public interface FieldPredicates {
         return field -> {
             Type genericType = field.getGenericType();
             if (genericType instanceof ParameterizedType) {
-                Type[] actualTypeArguments = ((ParameterizedType) (genericType)).getActualTypeArguments();
+                Type[] actualTypeArguments = ((ParameterizedType) (genericType))
+                        .getActualTypeArguments();
                 if (actualTypeArguments.length > index) {
                     if (actualTypeArguments[index] instanceof Class<?>) {
                         return rule.test((Class<?>) actualTypeArguments[index]);
                     } else if (actualTypeArguments[index] instanceof ParameterizedType) {
-                        return rule.test((Class<?>) ((ParameterizedType) actualTypeArguments[index]).getRawType());
+                        return rule.test((Class<?>) ((ParameterizedType) actualTypeArguments[index])
+                                .getRawType());
                     }
                 }
             }
@@ -89,10 +93,16 @@ public interface FieldPredicates {
     default Predicate<Field> getter(Predicate<Method> rule) {
         return field -> {
             String name = field.getName();
-            String getter = (boolean.class.equals(field.getType()) || Boolean.class.equals(field.getType()) ? "is" : "get")
-                    + name.substring(0, 1).toUpperCase(Locale.ENGLISH) + name.substring(1);
+            String getter = (boolean.class.equals(field.getType())
+                                     || Boolean.class.equals(field.getType())
+                             ? "is"
+                             : "get") + name
+                    .substring(0, 1)
+                    .toUpperCase(Locale.ENGLISH) + name.substring(1);
             try {
-                return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(), getter));
+                return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(),
+                                                                getter
+                ));
             } catch (NoSuchMethodException e) {
                 return false;
             }
@@ -154,9 +164,14 @@ public interface FieldPredicates {
     default Predicate<Field> setter(Predicate<Method> rule) {
         return field -> {
             String name = field.getName();
-            String setter = "set" + name.substring(0, 1).toUpperCase(Locale.ENGLISH) + name.substring(1);
+            String setter = "set" + name
+                    .substring(0, 1)
+                    .toUpperCase(Locale.ENGLISH) + name.substring(1);
             try {
-                return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(), setter, field.getType()));
+                return rule.test(Unreflection.getDeclaredMethod(field.getDeclaringClass(),
+                                                                setter,
+                                                                field.getType()
+                ));
             } catch (NoSuchMethodException e) {
                 return false;
             }
@@ -182,4 +197,5 @@ public interface FieldPredicates {
     default Predicate<Field> type(Predicate<Class<?>> rule) {
         return field -> rule.test(field.getType());
     }
+
 }

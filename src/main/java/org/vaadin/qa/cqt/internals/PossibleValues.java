@@ -45,6 +45,13 @@ public class PossibleValues {
 
     private final Class<?> clazz;
 
+    private static String formatMethodName(MethodNode methodNode) {
+        return methodNode.name + "(" + Stream
+                .of(getArgumentTypes(methodNode.desc))
+                .map(PossibleValues::getClassName)
+                .collect(Collectors.joining(", ")) + ")";
+    }
+
     private static String getClassName(Type type) {
         switch (type.getSort()) {
             case VOID:
@@ -66,26 +73,24 @@ public class PossibleValues {
             case DOUBLE:
                 return "double";
             case ARRAY:
-                StringBuilder stringBuilder = new StringBuilder(getClassName(type.getElementType()));
+                StringBuilder stringBuilder = new StringBuilder(getClassName(
+                        type.getElementType()));
                 for (int i = type.getDimensions(); i > 0; --i) {
                     stringBuilder.append("[]");
                 }
                 return stringBuilder.toString();
             case OBJECT:
             default:
-                return "{" + type.getInternalName().substring(type.getInternalName().lastIndexOf('/') + 1) + "}";
+                return "{"
+                        + type
+                        .getInternalName()
+                        .substring(type.getInternalName().lastIndexOf('/') + 1)
+                        + "}";
         }
     }
 
-    private static String formatMethodName(MethodNode methodNode) {
-        return methodNode.name + "(" +
-                Stream.of(getArgumentTypes(methodNode.desc))
-                        .map(PossibleValues::getClassName)
-                        .collect(Collectors.joining(", "))
-                + ")";
-    }
-
-    private static String getCollectionsWrapperClass(String name, String defaultValue) {
+    private static String getCollectionsWrapperClass(String name,
+                                                     String defaultValue) {
         switch (name) {
             case "emptyList":
                 return Classes.EMPTY_LIST.getName();
@@ -144,39 +149,110 @@ public class PossibleValues {
         return defaultValue;
     }
 
-    private Map<String, Set<PossibleValue>> collectPossibleValues() throws IOException, AnalyzerException {
+    private void addPossibleFieldValue(Map<String, Map<String, PossibleValue>> results,
+                                       String fieldName,
+                                       String fieldDesc,
+                                       boolean array,
+                                       String desc,
+                                       MethodNode method) {
+        if (desc.endsWith("[]") || desc.indexOf('.') < 0) {
+            // Skip arrays or primitives
+            return;
+        }
+        try {
+            Class<?> potentialClass = Thread
+                    .currentThread()
+                    .getContextClassLoader()
+                    .loadClass(desc);
+            String methodName = formatMethodName(method);
+
+            if (array) {
+                Class<?> arrayClass = Array
+                        .newInstance(potentialClass, 0)
+                        .getClass();
+                results
+                        .computeIfAbsent(fieldName, fn -> new HashMap<>())
+                        .computeIfAbsent(arrayClass.getName(),
+                                         cn -> new PossibleValue(arrayClass,
+                                                                 clazz
+                                         )
+                        )
+                        .addMethod(methodName);
+            } else {
+                results
+                        .computeIfAbsent(fieldName, fn -> new HashMap<>())
+                        .computeIfAbsent(potentialClass.getName(),
+                                         cn -> new PossibleValue(potentialClass,
+                                                                 clazz
+                                         )
+                        )
+                        .addMethod(methodName);
+            }
+        } catch (Throwable e) {
+            // ignore
+        }
+    }
+
+    private Map<String, Set<PossibleValue>> collectPossibleValues() throws
+                                                                    IOException,
+                                                                    AnalyzerException {
         Map<String, Map<String, PossibleValue>> results = new HashMap<>();
 
-        ClassNode classNode = new ClassNode();
-        ClassReader cr = new ClassReader(clazz.getName());
+        ClassNode   classNode = new ClassNode();
+        ClassReader cr        = new ClassReader(clazz.getName());
         cr.accept(classNode, 0);
 
         for (MethodNode method : classNode.methods) {
-            Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
+            Analyzer<SourceValue> analyzer
+                    = new Analyzer<>(new SourceInterpreter());
             analyzer.analyze(classNode.name, method);
 
-            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes
+                    = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
-                    if ((insn.getOpcode() == Opcodes.PUTFIELD || insn.getOpcode() == Opcodes.PUTSTATIC)) {
+                    if ((insn.getOpcode() == Opcodes.PUTFIELD
+                                 || insn.getOpcode() == Opcodes.PUTSTATIC)) {
                         String fieldName = insn.name;
                         String fieldDesc = getType(insn.desc).getClassName();
                         boolean array = insn.desc.startsWith("[");
-                        Frame<SourceValue>[] frames = analyzer.getFrames();
-                        Frame<SourceValue> current = frames[i];
-                        SourceValue topValue = current.getStack(current.getStackSize() - 1);
+                        Frame<SourceValue>[] frames  = analyzer.getFrames();
+                        Frame<SourceValue>   current = frames[i];
+                        SourceValue topValue
+                                = current.getStack(current.getStackSize() - 1);
                         for (AbstractInsnNode abstractInsnNode : topValue.insns) {
                             if (abstractInsnNode instanceof TypeInsnNode) {
-                                String desc = getObjectType(((TypeInsnNode) abstractInsnNode).desc).getClassName();
-                                addPossibleFieldValue(results, fieldName, fieldDesc, array, desc, method);
+                                String desc
+                                        = getObjectType(((TypeInsnNode) abstractInsnNode).desc)
+                                        .getClassName();
+                                addPossibleFieldValue(results,
+                                                      fieldName,
+                                                      fieldDesc,
+                                                      array,
+                                                      desc,
+                                                      method
+                                );
                             } else if (abstractInsnNode instanceof MethodInsnNode) {
-                                String desc = getType(((MethodInsnNode) abstractInsnNode).desc).getReturnType().getClassName();
-                                String name = ((MethodInsnNode) abstractInsnNode).name;
-                                if (((MethodInsnNode) abstractInsnNode).owner.equals(getInternalName(Collections.class))) {
-                                    desc = getCollectionsWrapperClass(name, desc);
+                                String desc
+                                        = getType(((MethodInsnNode) abstractInsnNode).desc)
+                                        .getReturnType()
+                                        .getClassName();
+                                String name
+                                        = ((MethodInsnNode) abstractInsnNode).name;
+                                if (((MethodInsnNode) abstractInsnNode).owner.equals(
+                                        getInternalName(Collections.class))) {
+                                    desc = getCollectionsWrapperClass(name,
+                                                                      desc
+                                    );
                                 }
-                                addPossibleFieldValue(results, fieldName, fieldDesc, array, desc, method);
+                                addPossibleFieldValue(results,
+                                                      fieldName,
+                                                      fieldDesc,
+                                                      array,
+                                                      desc,
+                                                      method
+                                );
                             }
                         }
                     }
@@ -186,34 +262,12 @@ public class PossibleValues {
 
         Map<String, Set<PossibleValue>> processedResults = new HashMap<>();
         for (Map.Entry<String, Map<String, PossibleValue>> entry : results.entrySet()) {
-            processedResults.put(entry.getKey(), new HashSet<>(entry.getValue().values()));
+            processedResults.put(entry.getKey(),
+                                 new HashSet<>(entry.getValue().values())
+            );
         }
 
         return processedResults;
-    }
-
-    private void addPossibleFieldValue(Map<String, Map<String, PossibleValue>> results, String fieldName, String fieldDesc, boolean array, String desc, MethodNode method) {
-        if (desc.endsWith("[]") || desc.indexOf('.') < 0) {
-            // Skip arrays or primitives
-            return;
-        }
-        try {
-            Class<?> potentialClass = Thread.currentThread().getContextClassLoader().loadClass(desc);
-            String methodName = formatMethodName(method);
-
-            if (array) {
-                Class<?> arrayClass = Array.newInstance(potentialClass, 0).getClass();
-                results.computeIfAbsent(fieldName, fn -> new HashMap<>())
-                        .computeIfAbsent(arrayClass.getName(), cn -> new PossibleValue(arrayClass, clazz))
-                        .addMethod(methodName);
-            } else {
-                results.computeIfAbsent(fieldName, fn -> new HashMap<>())
-                        .computeIfAbsent(potentialClass.getName(), cn -> new PossibleValue(potentialClass, clazz))
-                        .addMethod(methodName);
-            }
-        } catch (Throwable e) {
-            // ignore
-        }
     }
 
 }

@@ -13,10 +13,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Report(name = "Warning", level = Level.WARNING)
 public @interface Warning {
+
     /**
      * Specifies report message.
      *
      * @return the message
      */
     String value();
+
 }

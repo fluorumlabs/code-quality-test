@@ -12,12 +12,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Scopes {
-    /**
-     * List of object scopes for which inspection should be performed.
-     *
-     * @return the list of scopes
-     */
-    String[] value() default {};
 
     /**
      * List of object scopes for which inspection should not be performed.
@@ -25,4 +19,12 @@ public @interface Scopes {
      * @return the list of scopes
      */
     String[] exclude() default {};
+
+    /**
+     * List of object scopes for which inspection should be performed.
+     *
+     * @return the list of scopes
+     */
+    String[] value() default {};
+
 }

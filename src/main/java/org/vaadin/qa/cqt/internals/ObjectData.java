@@ -8,21 +8,6 @@ import java.util.List;
  * Object data associated with a particulat object instance.
  */
 public class ObjectData {
-    @Nullable
-    private final String scope;
-    private final List<ObjectValue> objectValues;
-    @Nullable
-    private String inheritedScope;
-
-    /**
-     * Instantiates a new object data.
-     *
-     * @param scope the scope
-     */
-    ObjectData(@Nullable String scope) {
-        this.scope = scope;
-        this.objectValues = new ArrayList<>();
-    }
 
     /**
      * Add value associated with this object (see {@link ObjectValue}.
@@ -40,6 +25,15 @@ public class ObjectData {
      */
     public boolean hasOwnScope() {
         return scope != null;
+    }
+
+    /**
+     * Set inherited scope.
+     *
+     * @param scope the scope
+     */
+    public void setInheritedScope(@Nullable String scope) {
+        this.inheritedScope = scope;
     }
 
     /**
@@ -69,20 +63,13 @@ public class ObjectData {
             if (inheritedScope == null) {
                 return "instance";
             } else {
-                return "instance".equals(inheritedScope) ? "instance" : "effectively " + inheritedScope;
+                return "instance".equals(inheritedScope)
+                       ? "instance"
+                       : "effectively " + inheritedScope;
             }
         } else {
             return scope;
         }
-    }
-
-    /**
-     * Set inherited scope.
-     *
-     * @param scope the scope
-     */
-    public void setInheritedScope(@Nullable String scope) {
-        this.inheritedScope = scope;
     }
 
     /**
@@ -93,4 +80,23 @@ public class ObjectData {
     public List<ObjectValue> getValues() {
         return objectValues;
     }
+
+    /**
+     * Instantiates a new object data.
+     *
+     * @param scope the scope
+     */
+    ObjectData(@Nullable String scope) {
+        this.scope        = scope;
+        this.objectValues = new ArrayList<>();
+    }
+
+    private final List<ObjectValue> objectValues;
+
+    @Nullable
+    private final String scope;
+
+    @Nullable
+    private String inheritedScope;
+
 }

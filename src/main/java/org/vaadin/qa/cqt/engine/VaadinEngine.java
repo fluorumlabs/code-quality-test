@@ -10,12 +10,12 @@ import java.util.List;
  * {@link Engine} with Servlet and Vaadin support
  */
 public class VaadinEngine extends ServletEngine {
+
     @Override
     public String detectScope(Class<?> clazz) {
         if (VaadinService.class.isAssignableFrom(clazz)
                 || RequestHandler.class.isAssignableFrom(clazz)
-                || VaadinContext.class.isAssignableFrom(clazz)
-        ) {
+                || VaadinContext.class.isAssignableFrom(clazz)) {
             return "singleton";
         }
         if (VaadinSession.class.isAssignableFrom(clazz)) {
@@ -33,13 +33,20 @@ public class VaadinEngine extends ServletEngine {
     }
 
     @Override
-    public String getVersion() {
-        return super.getVersion()+"-vaadin";
+    public List<String> getScopeOrder() {
+        return Arrays.asList(
+                "request",
+                "vaadin-ui",
+                "vaadin-session",
+                "session",
+                "singleton",
+                "static"
+        );
     }
 
     @Override
-    public List<String> getScopeOrder() {
-        return Arrays.asList("request", "vaadin-ui", "vaadin-session", "session", "singleton", "static");
+    public String getVersion() {
+        return super.getVersion() + "-vaadin";
     }
 
 }

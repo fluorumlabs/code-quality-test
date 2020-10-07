@@ -8,12 +8,6 @@ import java.util.function.Predicate;
  * Inspection definition
  */
 public class Inspection {
-    private final Level level;
-    private final Predicate<Reference> predicate;
-    private final String message;
-    private final String id;
-
-    private final String category;
 
     /**
      * Instantiate a new Inspection.
@@ -24,12 +18,25 @@ public class Inspection {
      * @param message   the message
      * @param id        the id
      */
-    public Inspection(Level level, Predicate<Reference> predicate, String category, String message, String id) {
-        this.level = level;
+    public Inspection(Level level,
+                      Predicate<Reference> predicate,
+                      String category,
+                      String message,
+                      String id) {
+        this.level     = level;
         this.predicate = predicate;
-        this.message = message;
-        this.category = category;
-        this.id = id;
+        this.message   = message;
+        this.category  = category;
+        this.id        = id;
+    }
+
+    /**
+     * Get category.
+     *
+     * @return the category
+     */
+    public String getCategory() {
+        return category;
     }
 
     /**
@@ -60,15 +67,6 @@ public class Inspection {
     }
 
     /**
-     * Get category.
-     *
-     * @return the category
-     */
-    public String getCategory() {
-        return category;
-    }
-
-    /**
      * Get predicate.
      *
      * @return the predicate
@@ -76,4 +74,15 @@ public class Inspection {
     public Predicate<Reference> getPredicate() {
         return predicate;
     }
+
+    private final String category;
+
+    private final String id;
+
+    private final Level level;
+
+    private final String message;
+
+    private final Predicate<Reference> predicate;
+
 }

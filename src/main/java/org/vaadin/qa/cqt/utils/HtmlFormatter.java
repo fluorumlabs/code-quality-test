@@ -19,10 +19,12 @@ import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
  */
 @FunctionalInterface
 public interface HtmlFormatter extends Function<String, String> {
+
     /**
      * Pattern matching packages in class name.
      */
-    Pattern PACKAGE_PATTERN = Pattern.compile("(\\b([a-z0-9])[a-z0-9_]*[.]\\b)");
+    Pattern PACKAGE_PATTERN
+            = Pattern.compile("(\\b([a-z0-9])[a-z0-9_]*[.]\\b)");
 
     /**
      * Encode value string via {@link URLEncoder#encode(String, Charset)}.
@@ -81,7 +83,17 @@ public interface HtmlFormatter extends Function<String, String> {
      * @return the html formatter
      */
     default HtmlFormatter decorate(String tag) {
-        return andThen(s -> s.isEmpty() ? "" : String.join("", "<", tag, ">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty()
+                            ? ""
+                            : String.join("",
+                                          "<",
+                                          tag,
+                                          ">",
+                                          s,
+                                          "</",
+                                          tag,
+                                          ">"
+                            ));
     }
 
     /**
@@ -95,10 +107,29 @@ public interface HtmlFormatter extends Function<String, String> {
         if (attributes.isEmpty()) {
             return decorate(tag);
         }
-        String attrs = attributes.entrySet().stream()
-                .map(entry -> String.join("", entry.getKey(), "=\"", escapeHtml4(entry.getValue()), "\""))
+        String attrs = attributes
+                .entrySet()
+                .stream()
+                .map(entry -> String.join("",
+                                          entry.getKey(),
+                                          "=\"",
+                                          escapeHtml4(entry.getValue()),
+                                          "\""
+                ))
                 .collect(Collectors.joining(" "));
-        return andThen(s -> s.isEmpty() ? "" : String.join("", "<", tag, " ", attrs, ">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty()
+                            ? ""
+                            : String.join("",
+                                          "<",
+                                          tag,
+                                          " ",
+                                          attrs,
+                                          ">",
+                                          s,
+                                          "</",
+                                          tag,
+                                          ">"
+                            ));
     }
 
     /**
@@ -110,7 +141,19 @@ public interface HtmlFormatter extends Function<String, String> {
      * @return the html formatter
      */
     default HtmlFormatter decorate(String tag, String attribute, String value) {
-        return andThen(s -> s.isEmpty() ? "" : String.join("", "<", tag, " ", attribute, "=\"", escapeHtml4(value), "\">", s, "</", tag, ">"));
+        return andThen(s -> s.isEmpty() ? "" : String.join("",
+                                                           "<",
+                                                           tag,
+                                                           " ",
+                                                           attribute,
+                                                           "=\"",
+                                                           escapeHtml4(value),
+                                                           "\">",
+                                                           s,
+                                                           "</",
+                                                           tag,
+                                                           ">"
+        ));
     }
 
     /**

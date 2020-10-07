@@ -8,6 +8,7 @@ import java.util.function.Predicate;
  * Predicates for dealing with {@link Member}.
  */
 public interface MemberPredicates {
+
     /**
      * Predicate testing if {@link Member} is abstract.
      *
@@ -247,4 +248,5 @@ public interface MemberPredicates {
     default <T extends Member> Predicate<T> isVolatile() {
         return member -> Modifier.isVolatile(member.getModifiers());
     }
+
 }

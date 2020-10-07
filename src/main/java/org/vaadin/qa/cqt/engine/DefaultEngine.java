@@ -7,7 +7,6 @@ import java.util.List;
  * Created by Artem Godin on 9/28/2020.
  */
 public class DefaultEngine extends Engine {
-    private static final String VERSION = "1.0.0";
 
     @Override
     public String detectScope(Class<?> clazz) {
@@ -20,12 +19,15 @@ public class DefaultEngine extends Engine {
     }
 
     @Override
+    public List<String> getScopeOrder() {
+        return Collections.singletonList("static");
+    }
+
+    @Override
     public String getVersion() {
         return VERSION;
     }
 
-    @Override
-    public List<String> getScopeOrder() {
-        return Collections.singletonList("static");
-    }
+    private static final String VERSION = "1.0.0";
+
 }

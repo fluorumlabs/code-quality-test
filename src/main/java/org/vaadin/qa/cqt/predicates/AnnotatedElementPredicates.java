@@ -10,6 +10,7 @@ import java.util.function.Predicate;
  * Predicates for dealing with {@link AnnotatedElement}.
  */
 public interface AnnotatedElementPredicates {
+
     /**
      * Predicate testing if {@link AnnotatedElement} is annotated with specified annotations
      *
@@ -21,8 +22,11 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (String aClass : classes) {
-                    if (Engine.getClass(aClass).isAssignableFrom(annotation.annotationType()))
+                    if (Engine
+                            .getClass(aClass)
+                            .isAssignableFrom(annotation.annotationType())) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -40,8 +44,9 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (Class<?> aClass : classes) {
-                    if (aClass.isAssignableFrom(annotation.annotationType()))
+                    if (aClass.isAssignableFrom(annotation.annotationType())) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -59,8 +64,11 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (String aClass : classes) {
-                    if (Engine.getClass(aClass).isAssignableFrom(annotation.annotationType()))
+                    if (Engine
+                            .getClass(aClass)
+                            .isAssignableFrom(annotation.annotationType())) {
                         return false;
+                    }
                 }
             }
             return true;
@@ -78,11 +86,13 @@ public interface AnnotatedElementPredicates {
         return element -> {
             for (Annotation annotation : element.getDeclaredAnnotations()) {
                 for (Class<?> aClass : classes) {
-                    if (aClass.isAssignableFrom(annotation.annotationType()))
+                    if (aClass.isAssignableFrom(annotation.annotationType())) {
                         return false;
+                    }
                 }
             }
             return true;
         };
     }
+
 }

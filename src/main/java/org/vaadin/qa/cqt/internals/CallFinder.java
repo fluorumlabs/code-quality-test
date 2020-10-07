@@ -15,9 +15,6 @@ import java.util.*;
  * methods of an object that can be stored in a specific field.
  */
 public class CallFinder {
-    private final Class<?> clazz;
-    private final String fieldName;
-    private final List<String> methods;
 
     /**
      * Instantiates a new call finder for declaring class of field.
@@ -26,8 +23,8 @@ public class CallFinder {
      * @param methods the list of methods
      */
     public CallFinder(Member field, List<String> methods) {
-        clazz = field.getDeclaringClass();
-        fieldName = field.getName();
+        clazz        = field.getDeclaringClass();
+        fieldName    = field.getName();
         this.methods = Collections.unmodifiableList(methods);
     }
 
@@ -49,10 +46,19 @@ public class CallFinder {
         return false;
     }
 
-    private boolean fieldWasConsumedFromStack(int index, Analyzer<SourceValue> analyzer) {
-        Frame<SourceValue>[] frames = analyzer.getFrames();
-        Frame<SourceValue> current = frames[index];
-        Frame<SourceValue> next = index < frames.length-1 ? frames[index + 1] : current;
+    private final Class<?> clazz;
+
+    private final String fieldName;
+
+    private final List<String> methods;
+
+    private boolean fieldWasConsumedFromStack(int index,
+                                              Analyzer<SourceValue> analyzer) {
+        Frame<SourceValue>[] frames  = analyzer.getFrames();
+        Frame<SourceValue>   current = frames[index];
+        Frame<SourceValue> next = index < frames.length - 1
+                                  ? frames[index + 1]
+                                  : current;
 
         List<String> fields = new ArrayList<>();
         for (int i = 0; i < current.getStackSize(); i++) {
@@ -70,7 +76,7 @@ public class CallFinder {
             for (AbstractInsnNode abstractInsnNode : instance.insns) {
                 if (abstractInsnNode instanceof FieldInsnNode) {
                     FieldInsnNode insnNode = (FieldInsnNode) abstractInsnNode;
-                    int indexOf = fields.indexOf(insnNode.name);
+                    int           indexOf  = fields.indexOf(insnNode.name);
                     if (indexOf >= 0) {
                         fields.remove(indexOf);
                     }
@@ -81,50 +87,68 @@ public class CallFinder {
         return fields.contains(fieldName);
     }
 
-    private Set<String> findCallingMethods() throws IOException, AnalyzerException {
-        ClassNode classNode = new ClassNode();
-        ClassReader cr = new ClassReader(clazz.getName());
+    private Set<String> findCallingMethods() throws
+                                             IOException,
+                                             AnalyzerException {
+        ClassNode   classNode = new ClassNode();
+        ClassReader cr        = new ClassReader(clazz.getName());
         cr.accept(classNode, 0);
 
-        Map<String, Set<String>> selfReferences = new HashMap<>();
-        Map<String, MethodNode> methodRefs = new HashMap<>();
-        List<String> methodsWithInvocations = new ArrayList<>();
+        Map<String, Set<String>> selfReferences         = new HashMap<>();
+        Map<String, MethodNode>  methodRefs             = new HashMap<>();
+        List<String>             methodsWithInvocations = new ArrayList<>();
 
         for (MethodNode method : classNode.methods) {
             String signature = method.name + method.desc;
             methodRefs.put(method.name + method.desc, method);
 
-            Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
+            Analyzer<SourceValue> analyzer
+                    = new Analyzer<>(new SourceInterpreter());
             analyzer.analyze(classNode.name, method);
 
-            AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
+            AbstractInsnNode[] abstractInsnNodes
+                    = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
                 if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
-                    if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
-                        if (fieldWasConsumedFromStack(i, analyzer) && methods.contains(insn.name)) {
+                    if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL
+                            || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
+                        if (fieldWasConsumedFromStack(i, analyzer)
+                                && methods.contains(insn.name)) {
                             methodsWithInvocations.add(signature);
                         }
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences.computeIfAbsent(insn.name + insn.desc, s -> new HashSet<>()).add(signature);
+                            selfReferences
+                                    .computeIfAbsent(insn.name + insn.desc,
+                                                     s -> new HashSet<>()
+                                    )
+                                    .add(signature);
                         }
                     } else if (insn.getOpcode() == Opcodes.INVOKESTATIC) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences.computeIfAbsent(insn.name + insn.desc, s -> new HashSet<>()).add(signature);
+                            selfReferences
+                                    .computeIfAbsent(insn.name + insn.desc,
+                                                     s -> new HashSet<>()
+                                    )
+                                    .add(signature);
                         }
                     }
                 } else if (abstractInsnNodes[i] instanceof InvokeDynamicInsnNode) {
-                    InvokeDynamicInsnNode insn = (InvokeDynamicInsnNode) abstractInsnNodes[i];
+                    InvokeDynamicInsnNode insn
+                            = (InvokeDynamicInsnNode) abstractInsnNodes[i];
 
-                    boolean match = false;
+                    boolean match     = false;
                     boolean selfMatch = false;
-                    String callChain = null;
+                    String  callChain = null;
                     for (Object bsmArg : insn.bsmArgs) {
                         if (bsmArg instanceof Handle) {
                             if (methods.contains(((Handle) bsmArg).getName())) {
                                 match = true;
-                            } else if (((Handle) bsmArg).getOwner().equals(classNode.name)) {
-                                callChain = ((Handle) bsmArg).getName() + ((Handle) bsmArg).getDesc();
+                            } else if (((Handle) bsmArg)
+                                    .getOwner()
+                                    .equals(classNode.name)) {
+                                callChain = ((Handle) bsmArg).getName()
+                                        + ((Handle) bsmArg).getDesc();
                                 selfMatch = true;
                             }
                         }
@@ -134,20 +158,28 @@ public class CallFinder {
                         methodsWithInvocations.add(signature);
                     }
                     if (selfMatch) {
-                        selfReferences.computeIfAbsent(callChain, s -> new HashSet<>()).add(signature);
+                        selfReferences
+                                .computeIfAbsent(callChain,
+                                                 s -> new HashSet<>()
+                                )
+                                .add(signature);
                     }
                 }
             }
         }
 
-        Set<String> result = new HashSet<>();
-        Set<String> visitedMethods = new HashSet<>(methodsWithInvocations);
-        Queue<String> unroll = new ArrayDeque<>(methodsWithInvocations);
+        Set<String>   result         = new HashSet<>();
+        Set<String>   visitedMethods = new HashSet<>(methodsWithInvocations);
+        Queue<String> unroll         = new ArrayDeque<>(methodsWithInvocations);
 
         while (unroll.peek() != null) {
-            String signature = unroll.poll();
+            String     signature  = unroll.poll();
             MethodNode methodNode = methodRefs.get(signature);
-            if (ExposedMembers.isMethodExposed(classNode.name, methodNode.name, methodNode.desc) || methodNode.name.startsWith("<")) {
+            if (ExposedMembers.isMethodExposed(classNode.name,
+                                               methodNode.name,
+                                               methodNode.desc
+            )
+                    || methodNode.name.startsWith("<")) {
                 result.add(methodNode.name);
             }
             if (selfReferences.get(signature) != null) {
@@ -161,4 +193,5 @@ public class CallFinder {
 
         return result;
     }
+
 }

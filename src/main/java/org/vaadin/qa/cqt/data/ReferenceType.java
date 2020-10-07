@@ -21,11 +21,13 @@ public enum ReferenceType {
      */
     THREAD_LOCAL("<thread local>"),
     /**
-     * The Thread local value, but thread is in {@link Thread.State#WAITING} state.
+     * The Thread local value, but thread is in {@link Thread.State#WAITING}
+     * state.
      */
     WAITING_THREAD_LOCAL("<thread local (waiting)>"),
     /**
-     * The Thread local value, but thread is in {@link Thread.State#TERMINATED} state.
+     * The Thread local value, but thread is in
+     * {@link Thread.State#TERMINATED} state.
      */
     TERMINATED_THREAD_LOCAL("<thread local (terminated)>"),
     /**
@@ -57,14 +59,14 @@ public enum ReferenceType {
      */
     MAP_VALUE("<map value>");
 
+    @Override
+    public String toString() {
+        return title;
+    }
+
     private final String title;
 
     ReferenceType(String title) {
         this.title = title;
-    }
-
-    @Override
-    public String toString() {
-        return title;
     }
 }

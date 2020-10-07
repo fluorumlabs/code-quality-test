@@ -9,6 +9,7 @@ import java.util.function.Predicate;
  * Predicates for dealing with {@link Class}.
  */
 public interface TypePredicates {
+
     /**
      * Predicate testing if {@link Class} is assignable to specified class.
      *
@@ -28,7 +29,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> is(String... classes) {
         return type -> {
             for (String aClass : classes) {
-                if (Engine.getClass(aClass).isAssignableFrom(type)) return true;
+                if (Engine.getClass(aClass).isAssignableFrom(type)) {
+                    return true;
+                }
             }
             return false;
         };
@@ -53,7 +56,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> is(Class<?>... classes) {
         return type -> {
             for (Class<?> aClass : classes) {
-                if (aClass.isAssignableFrom(type)) return true;
+                if (aClass.isAssignableFrom(type)) {
+                    return true;
+                }
             }
             return false;
         };
@@ -123,8 +128,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isExactly(String... classes) {
         return type -> {
             for (String aClass : classes) {
-                if (Engine.getClass(aClass).getName().equals(type.getName()))
+                if (Engine.getClass(aClass).getName().equals(type.getName())) {
                     return true;
+                }
             }
             return false;
         };
@@ -149,7 +155,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isExactly(Class<?>... classes) {
         return type -> {
             for (Class<?> aClass : classes) {
-                if (aClass.getName().equals(type.getName())) return true;
+                if (aClass.getName().equals(type.getName())) {
+                    return true;
+                }
             }
             return false;
         };
@@ -219,8 +227,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isNot(String... classes) {
         return type -> {
             for (String aClass : classes) {
-                if (Engine.getClass(aClass).isAssignableFrom(type))
+                if (Engine.getClass(aClass).isAssignableFrom(type)) {
                     return false;
+                }
             }
             return true;
         };
@@ -245,7 +254,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isNot(Class<?>... classes) {
         return type -> {
             for (Class<?> aClass : classes) {
-                if (aClass.isAssignableFrom(type)) return false;
+                if (aClass.isAssignableFrom(type)) {
+                    return false;
+                }
             }
             return true;
         };
@@ -315,8 +326,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isNotExactly(String... classes) {
         return type -> {
             for (String aClass : classes) {
-                if (Engine.getClass(aClass).getName().equals(type.getName()))
+                if (Engine.getClass(aClass).getName().equals(type.getName())) {
                     return false;
+                }
             }
             return true;
         };
@@ -341,7 +353,9 @@ public interface TypePredicates {
     default Predicate<Class<?>> isNotExactly(Class<?>... classes) {
         return type -> {
             for (Class<?> aClass : classes) {
-                if (aClass.getName().equals(type.getName())) return false;
+                if (aClass.getName().equals(type.getName())) {
+                    return false;
+                }
             }
             return true;
         };
