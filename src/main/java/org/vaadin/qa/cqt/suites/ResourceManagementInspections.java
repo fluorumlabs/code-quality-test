@@ -225,7 +225,7 @@ public final class ResourceManagementInspections extends Suite {
     }
 
     /**
-     * {@link Timer} spwans a new thread in its constructor. The new {@link
+     * {@link Timer} spawns a new thread in its constructor. The new {@link
      * Thread} will inherit some properties from its parent: context
      * classloader, inheritable {@code ThreadLocals}, and some security
      * properties (access rights). It is therefore rarely desireable to have
