@@ -217,7 +217,8 @@ public class CodeQualityTestServer {
                 server.start();
                 String preamble = "Code Quality Test Server (" + EngineInstance
                         .get()
-                        .getVersion() + ")";
+                        .getVersion() + ")    "
+                                  + "https://github.com/fluorumlabs/code-quality-test";
                 String banner = "Server running at http://localhost:" + port;
                 int width = Math.max(
                         preamble.length(),
