@@ -273,7 +273,7 @@ public final class ResourceManagementInspections extends Suite {
                     if (o instanceof ThreadPoolExecutor) {
                         ThreadPoolExecutor tpe = (ThreadPoolExecutor) o;
                         return tpe.getCorePoolSize()
-                                == tpe.getMaximumPoolSize();
+                               == tpe.getMaximumPoolSize();
                     }
                     return false;
                 })

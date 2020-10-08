@@ -108,7 +108,7 @@ public class CallFinder {
                 if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
                     if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL
-                            || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
+                        || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
                         if (fieldWasConsumedFromStack(
                                 i,
                                 analyzer
@@ -143,7 +143,7 @@ public class CallFinder {
                                     .getOwner()
                                     .equals(classNode.name)) {
                                 callChain = ((Handle) bsmArg).getName()
-                                        + ((Handle) bsmArg).getDesc();
+                                            + ((Handle) bsmArg).getDesc();
                                 selfMatch = true;
                             }
                         }

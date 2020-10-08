@@ -62,7 +62,7 @@ public class SpringEngine extends DefaultEngine {
     @Override
     public String detectScope(Class<?> clazz) {
         if (Component.class.isAssignableFrom(clazz)
-                || ApplicationContext.class.isAssignableFrom(clazz)) {
+            || ApplicationContext.class.isAssignableFrom(clazz)) {
             return "singleton";
         }
         Annotation[] annotations;
@@ -95,18 +95,6 @@ public class SpringEngine extends DefaultEngine {
     }
 
     @Override
-    public Object unwrap(Object proxy) {
-        while ((AopUtils.isAopProxy(proxy))) {
-            try {
-                return unwrap(((Advised) proxy).getTargetSource().getTarget());
-            } catch (Exception e) {
-                return proxy;
-            }
-        }
-        return proxy;
-    }
-
-    @Override
     public List<String> getScopeOrder() {
         return Arrays.asList(
                 "request",
@@ -116,6 +104,18 @@ public class SpringEngine extends DefaultEngine {
                 "restart",
                 "static"
         );
+    }
+
+    @Override
+    public Object unwrap(Object proxy) {
+        while ((AopUtils.isAopProxy(proxy))) {
+            try {
+                return unwrap(((Advised) proxy).getTargetSource().getTarget());
+            } catch (Exception e) {
+                return proxy;
+            }
+        }
+        return proxy;
     }
 
     @Override

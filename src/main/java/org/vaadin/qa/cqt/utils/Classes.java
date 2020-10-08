@@ -304,9 +304,9 @@ public final class Classes {
             }
         }
         throw new IllegalArgumentException("Cannot find inner class "
-                                                   + name
-                                                   + " in "
-                                                   + outer.getName());
+                                           + name
+                                           + " in "
+                                           + outer.getName());
     }
 
     private enum DUMMY_ENUM {

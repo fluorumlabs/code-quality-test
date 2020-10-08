@@ -193,7 +193,7 @@ public class Suite
                 try {
                     method.setAccessible(true);
                     return method.invoke(reference.getOwner())
-                            == reference.getTarget();
+                           == reference.getTarget();
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     return false;
                 }
@@ -388,7 +388,7 @@ public class Suite
      */
     public Predicate<Reference> ownerType(Predicate<Class<?>> rule) {
         return reference -> reference.getOwnerClass() != null
-                && rule.test(reference.getOwnerClass());
+                            && rule.test(reference.getOwnerClass());
     }
 
     /**
@@ -468,8 +468,8 @@ public class Suite
 
         for (Method method : getClass().getMethods()) {
             if (method.getParameterCount() > 0
-                    || !Predicate.class.isAssignableFrom(method.getReturnType())
-                    || Modifier.isStatic(method.getModifiers())) {
+                || !Predicate.class.isAssignableFrom(method.getReturnType())
+                || Modifier.isStatic(method.getModifiers())) {
                 continue;
             }
             if (method.getAnnotation(Disabled.class) != null) {
@@ -478,8 +478,9 @@ public class Suite
             Optional<Annotation> report = Arrays
                     .stream(method.getDeclaredAnnotations())
                     .filter(annotation -> annotation
-                            .annotationType()
-                            .getAnnotation(Report.class) != null)
+                                                  .annotationType()
+                                                  .getAnnotation(Report.class)
+                                          != null)
                     .findFirst();
             report.ifPresent(annotation -> {
                 Report reportAnnotation = annotation
@@ -604,7 +605,7 @@ public class Suite
      */
     public Predicate<Reference> targetType(Predicate<Class<?>> rule) {
         return reference -> reference.getTargetClass() != null
-                && rule.test(reference.getTargetClass());
+                            && rule.test(reference.getTargetClass());
     }
 
     /**

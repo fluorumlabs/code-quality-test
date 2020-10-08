@@ -320,8 +320,8 @@ public class CodeQualityTestServer {
             String path = exchange.getRequestURI().getPath();
 
             if (!path.endsWith("/")
-                    && !path.endsWith("/scan")
-                    && !path.endsWith("/suppress")) {
+                && !path.endsWith("/scan")
+                && !path.endsWith("/suppress")) {
                 exchange.getResponseHeaders().add(
                         "Location",
                         path + "/"
@@ -351,187 +351,187 @@ public class CodeQualityTestServer {
                         .get()
                         .getVersion() + "</title>");
                 output.println("<style>\n"
-                                       + "    body {\n"
-                                       + "        font-size: 16px;\n"
-                                       + "        line-height: 24px;\n"
-                                       + "        padding: 24px;\n"
-                                       + "        background-color: #fff;\n"
-                                       + "        color: #000;\n"
-                                       + "        box-sizing: border-box;\n"
-                                       + "    }\n"
-                                       + "    \n"
-                                       + "    * {\n"
-                                       + "        transition: all 200ms;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    pre {\n"
-                                       + "        overflow-x: hidden;\n"
-                                       + "        text-overflow: ellipsis;\n"
-                                       + "        font-family: \"Fira Code\", \"Source Code Pro\", \"Lucida Console\", Monaco, monospace;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .container {\n"
-                                       + "        white-space: normal;\n"
-                                       + "        position: absolute;\n"
-                                       + "        width: calc(100vw - 32px);\n"
-                                       + "        height: 100vh;\n"
-                                       + "    "
-                                       + "}\n"
-                                       + "\n"
-                                       + "    .container .frame {\n"
-                                       + "        white-space: pre;\n"
-                                       + "        background-color: white;\n"
-                                       + "        position: absolute;\n"
-                                       + "        top: 0;\n"
-                                       + "        left: 0;\n"
-                                       + "        width: 100%;\n"
-                                       + "        height: 100%;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    h1 {\n"
-                                       + "        margin-bottom: 0;\n"
-                                       + "        font-weight: normal;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .report, .banner {\n"
-                                       + "        font-size: 1.2em;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .updated .report .category::before {\n"
-                                       + "        content: 'New/updated';\n"
-                                       + "        padding-left: 8px;\n"
-                                       + "        padding-right: 8px;\n"
-                                       + "        margin-right: 8px;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .updated .report.error .category::before {\n"
-                                       + "        background-color: #b63a7e;\n"
-                                       + "        color: #fff;\n"
-                                       + "        border-radius: 4px;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .updated .report.warning .category::before {\n"
-                                       + "        background-color: #853eec;\n"
-                                       + "        color: #fff;\n"
-                                       + "        border-radius: 4px;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .updated .report.info .category::before {\n"
-                                       + "        background-color: #17934f;\n"
-                                       + "        color: #fff;\n"
-                                       + "        border-radius: 4px;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .banner {\n"
-                                       + "        position: fixed;\n"
-                                       + "        left: 0;\n"
-                                       + "        right: 0;\n"
-                                       + "        top: 0;\n"
-                                       + "        background-color: #1a2843;\n"
-                                       + "        color: white;\n"
-                                       + "        padding: 1.2rem;\n"
-                                       + "        box-shadow: 0 0 10px black;\n"
-                                       + "        display: flex;\n"
-                                       + "    "
-                                       + "}\n"
-                                       + "    \n"
-                                       + "    .banner .application {\n"
-                                       + "        flex-grow: 1;\n"
-                                       + "        padding: 4px;\n"
-                                       + "    }\n"
-                                       + "    \n"
-                                       + "\n"
-                                       + "    .report .message {\n"
-                                       + "        font-weight: bold;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .report .buttons {\n"
-                                       + "        opacity: 0;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .block {\n"
-                                       + "        display: block;\n"
-                                       + "        overflow-x: hidden;\n"
-                                       + "        text-overflow: ellipsis;\n"
-                                       + "        margin-bottom: 1.2rem;\n"
-                                       + "    "
-                                       + "}\n"
-                                       + "\n"
-                                       + "    .block:hover .buttons {\n"
-                                       + "        opacity: 1;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .value.null, .error, .exception {\n"
-                                       + "        color: #b63a7e;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .warning {\n"
-                                       + "        color: #853eec;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .value.primitive {\n"
-                                       + "        color: #356bd4;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .title {\n"
-                                       + "        font-size: 1.2rem;\n"
-                                       + "        display: block;\n"
-                                       + "        font-weight: bold;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .buttons a {\n"
-                                       + "        border: currentColor solid 1px;\n"
-                                       + "        padding-left: 8px;\n"
-                                       + "        padding-right: 8px;\n"
-                                       + "        text-decoration: none;\n"
-                                       + "        background-color: #356bd400;\n"
-                                       + "        border-radius: 4px;\n"
-                                       + "        display: inline-block;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .buttons a:hover {\n"
-                                       + "        background-color: #356bd420;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    a, a * {\n"
-                                       + "        color: currentColor;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    a:hover, a:hover * {\n"
-                                       + "        color: #356bd4 !important;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .info, .value.string {\n"
-                                       + "        color: #17934f;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .class {\n"
-                                       + "        color: black;\n"
-                                       + "        font-weight: bold;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .package, .class.package, .generic, .reference, .value {\n"
-                                       + "        color: #888;\n"
-                                       + "        font-weight: normal;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .static {\n"
-                                       + "        font-style: italic;\n"
-                                       + "    }\n"
-                                       + "\n"
-                                       + "    .value.possible, .value.possible .class {\n"
-                                       + "        color: #356bd4;\n"
-                                       + "        font-weight: normal;\n"
-                                       + "        font-style: italic;\n"
-                                       + "    }\n"
-                                       + "</style>");
+                               + "    body {\n"
+                               + "        font-size: 16px;\n"
+                               + "        line-height: 24px;\n"
+                               + "        padding: 24px;\n"
+                               + "        background-color: #fff;\n"
+                               + "        color: #000;\n"
+                               + "        box-sizing: border-box;\n"
+                               + "    }\n"
+                               + "    \n"
+                               + "    * {\n"
+                               + "        transition: all 200ms;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    pre {\n"
+                               + "        overflow-x: hidden;\n"
+                               + "        text-overflow: ellipsis;\n"
+                               + "        font-family: \"Fira Code\", \"Source Code Pro\", \"Lucida Console\", Monaco, monospace;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .container {\n"
+                               + "        white-space: normal;\n"
+                               + "        position: absolute;\n"
+                               + "        width: calc(100vw - 32px);\n"
+                               + "        height: 100vh;\n"
+                               + "    "
+                               + "}\n"
+                               + "\n"
+                               + "    .container .frame {\n"
+                               + "        white-space: pre;\n"
+                               + "        background-color: white;\n"
+                               + "        position: absolute;\n"
+                               + "        top: 0;\n"
+                               + "        left: 0;\n"
+                               + "        width: 100%;\n"
+                               + "        height: 100%;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    h1 {\n"
+                               + "        margin-bottom: 0;\n"
+                               + "        font-weight: normal;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .report, .banner {\n"
+                               + "        font-size: 1.2em;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .updated .report .category::before {\n"
+                               + "        content: 'New/updated';\n"
+                               + "        padding-left: 8px;\n"
+                               + "        padding-right: 8px;\n"
+                               + "        margin-right: 8px;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .updated .report.error .category::before {\n"
+                               + "        background-color: #b63a7e;\n"
+                               + "        color: #fff;\n"
+                               + "        border-radius: 4px;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .updated .report.warning .category::before {\n"
+                               + "        background-color: #853eec;\n"
+                               + "        color: #fff;\n"
+                               + "        border-radius: 4px;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .updated .report.info .category::before {\n"
+                               + "        background-color: #17934f;\n"
+                               + "        color: #fff;\n"
+                               + "        border-radius: 4px;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .banner {\n"
+                               + "        position: fixed;\n"
+                               + "        left: 0;\n"
+                               + "        right: 0;\n"
+                               + "        top: 0;\n"
+                               + "        background-color: #1a2843;\n"
+                               + "        color: white;\n"
+                               + "        padding: 1.2rem;\n"
+                               + "        box-shadow: 0 0 10px black;\n"
+                               + "        display: flex;\n"
+                               + "    "
+                               + "}\n"
+                               + "    \n"
+                               + "    .banner .application {\n"
+                               + "        flex-grow: 1;\n"
+                               + "        padding: 4px;\n"
+                               + "    }\n"
+                               + "    \n"
+                               + "\n"
+                               + "    .report .message {\n"
+                               + "        font-weight: bold;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .report .buttons {\n"
+                               + "        opacity: 0;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .block {\n"
+                               + "        display: block;\n"
+                               + "        overflow-x: hidden;\n"
+                               + "        text-overflow: ellipsis;\n"
+                               + "        margin-bottom: 1.2rem;\n"
+                               + "    "
+                               + "}\n"
+                               + "\n"
+                               + "    .block:hover .buttons {\n"
+                               + "        opacity: 1;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .value.null, .error, .exception {\n"
+                               + "        color: #b63a7e;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .warning {\n"
+                               + "        color: #853eec;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .value.primitive {\n"
+                               + "        color: #356bd4;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .title {\n"
+                               + "        font-size: 1.2rem;\n"
+                               + "        display: block;\n"
+                               + "        font-weight: bold;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .buttons a {\n"
+                               + "        border: currentColor solid 1px;\n"
+                               + "        padding-left: 8px;\n"
+                               + "        padding-right: 8px;\n"
+                               + "        text-decoration: none;\n"
+                               + "        background-color: #356bd400;\n"
+                               + "        border-radius: 4px;\n"
+                               + "        display: inline-block;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .buttons a:hover {\n"
+                               + "        background-color: #356bd420;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    a, a * {\n"
+                               + "        color: currentColor;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    a:hover, a:hover * {\n"
+                               + "        color: #356bd4 !important;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .info, .value.string {\n"
+                               + "        color: #17934f;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .class {\n"
+                               + "        color: black;\n"
+                               + "        font-weight: bold;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .package, .class.package, .generic, .reference, .value {\n"
+                               + "        color: #888;\n"
+                               + "        font-weight: normal;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .static {\n"
+                               + "        font-style: italic;\n"
+                               + "    }\n"
+                               + "\n"
+                               + "    .value.possible, .value.possible .class {\n"
+                               + "        color: #356bd4;\n"
+                               + "        font-weight: normal;\n"
+                               + "        font-style: italic;\n"
+                               + "    }\n"
+                               + "</style>");
                 output.println("</head><body><pre>");
 
                 banner(output);
 
                 try {
                     boolean needToRunScanner = !resultsAreReady.get()
-                            && !scannerIsRunning.get();
+                                               && !scannerIsRunning.get();
                     if (path.endsWith("/scan") || needToRunScanner) {
                         output.println("Scanner is currently running...");
                         runScanner(output);
@@ -567,12 +567,12 @@ public class CodeQualityTestServer {
 
                         if (scannerIsRunning.get()) {
                             output.println("Last scanned at "
-                                                   + lastScanDate
-                                                   + ". Scanner is currently running...");
+                                           + lastScanDate
+                                           + ". Scanner is currently running...");
                         } else {
                             output.println("Last scanned at "
-                                                   + lastScanDate
-                                                   + ". <span class='buttons'><a href='scan'>Click to rescan</a></span>");
+                                           + lastScanDate
+                                           + ". <span class='buttons'><a href='scan'>Click to rescan</a></span>");
                         }
                         output.println();
 
@@ -611,9 +611,9 @@ public class CodeQualityTestServer {
 
         private void banner(PrintWriter output) {
             output.println(
-                    "<span class='banner'><span class='application'>Code Quality Test Server ("
-                            + EngineInstance.get().getVersion()
-                            + ")</span></span>");
+                    "<span class='banner'><span class='application'><a href='https://github.com/fluorumlabs/code-quality-test'>Code Quality Test Server</a> ("
+                    + EngineInstance.get().getVersion()
+                    + ")</span></span>");
             output.println();
         }
 
@@ -682,7 +682,10 @@ public class CodeQualityTestServer {
                 if (!Files.exists(cqtIgnore)) {
                     Files.write(
                             cqtIgnore,
-                            Collections.singletonList("# Code Quality Test report suppression list"),
+                            Arrays.asList(
+                                    "# Code Quality Test report suppression list",
+                                    "# https://github.com/fluorumlabs/code-quality-test"
+                            ),
                             StandardCharsets.UTF_8,
                             StandardOpenOption.CREATE
                     );
@@ -720,13 +723,13 @@ public class CodeQualityTestServer {
                             .loadClass(path);
                     output.println(
                             "<span class='title'><span class='buttons'><a href='/'>&lt;</a></span> Reports for "
-                                    + Reference.formatClassName(aClass)
-                                    + "</span>");
+                            + Reference.formatClassName(aClass)
+                            + "</span>");
                 } catch (Throwable e) {
                     output.println(
                             "<span class='title error'><span class='buttons'><a href='/'>&lt;</a></span> Unknown class "
-                                    + path
-                                    + "</span>");
+                            + path
+                            + "</span>");
                     return;
                 }
             }
@@ -739,7 +742,7 @@ public class CodeQualityTestServer {
                 for (String currentResult : currentResults) {
                     if (!path.isEmpty()) {
                         if (!currentResult.contains("<!-- Class: "
-                                                            + HtmlFormatter.encodeValue(path))) {
+                                                    + HtmlFormatter.encodeValue(path))) {
                             continue;
                         }
                     }
@@ -748,20 +751,20 @@ public class CodeQualityTestServer {
                             .stream()
                             .anyMatch(desc -> currentResult.contains(
                                     "<!-- Descriptor: "
-                                            + HtmlFormatter.encodeValue(desc)
-                                            + " -->"))) {
+                                    + HtmlFormatter.encodeValue(desc)
+                                    + " -->"))) {
                         continue;
                     }
 
                     foundSomething = true;
                     if (previousResults.contains(currentResult)) {
                         output.print("<span class='block same'>"
-                                             + currentResult
-                                             + "</span>");
+                                     + currentResult
+                                     + "</span>");
                     } else {
                         output.print("<span class='block updated'>"
-                                             + currentResult
-                                             + "</span>");
+                                     + currentResult
+                                     + "</span>");
                     }
                 }
 
@@ -773,17 +776,17 @@ public class CodeQualityTestServer {
 
         private void cancelAutoRefresh(PrintWriter output) {
             output.print("<script>\n"
-                                 + "    self.window.removeEventListener('DOMContentLoaded', autoRefresh);\n"
-                                 + "</script>");
+                         + "    self.window.removeEventListener('DOMContentLoaded', autoRefresh);\n"
+                         + "</script>");
         }
 
         private void autoRefresh(PrintWriter output) {
             output.print("<script>\n"
-                                 + "    function autoRefresh() {"
-                                 + " "
-                                 + "self.location.replace(document.baseURI); }\n"
-                                 + "    self.window.addEventListener('DOMContentLoaded', autoRefresh);\n"
-                                 + "</script>");
+                         + "    function autoRefresh() {"
+                         + " "
+                         + "self.location.replace(document.baseURI); }\n"
+                         + "    self.window.addEventListener('DOMContentLoaded', autoRefresh);\n"
+                         + "</script>");
         }
 
         private void refresh(PrintWriter output) {

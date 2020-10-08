@@ -90,10 +90,12 @@ public class PossibleValues {
             case OBJECT:
             default:
                 return "{"
-                        + type
-                        .getInternalName()
-                        .substring(type.getInternalName().lastIndexOf('/') + 1)
-                        + "}";
+                       + type
+                               .getInternalName()
+                               .substring(type
+                                                  .getInternalName()
+                                                  .lastIndexOf('/') + 1)
+                       + "}";
         }
     }
 
@@ -244,14 +246,14 @@ public class PossibleValues {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
                     if ((insn.getOpcode() == Opcodes.PUTFIELD
-                                 || insn.getOpcode() == Opcodes.PUTSTATIC)) {
+                         || insn.getOpcode() == Opcodes.PUTSTATIC)) {
                         String               fieldName = insn.name;
                         String               fieldDesc = getType(insn.desc).getClassName();
                         boolean              array     = insn.desc.startsWith("[");
                         Frame<SourceValue>[] frames    = analyzer.getFrames();
                         Frame<SourceValue>   current   = frames[i];
                         SourceValue topValue = current.getStack(current.getStackSize()
-                                                                        - 1);
+                                                                - 1);
                         for (AbstractInsnNode abstractInsnNode : topValue.insns) {
                             if (abstractInsnNode instanceof TypeInsnNode) {
                                 String desc = getObjectType(((TypeInsnNode) abstractInsnNode).desc)

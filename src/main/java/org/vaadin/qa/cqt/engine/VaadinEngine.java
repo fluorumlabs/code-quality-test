@@ -37,8 +37,8 @@ public class VaadinEngine extends ServletEngine {
     @Override
     public String detectScope(Class<?> clazz) {
         if (VaadinService.class.isAssignableFrom(clazz)
-                || RequestHandler.class.isAssignableFrom(clazz)
-                || VaadinContext.class.isAssignableFrom(clazz)) {
+            || RequestHandler.class.isAssignableFrom(clazz)
+            || VaadinContext.class.isAssignableFrom(clazz)) {
             return "singleton";
         }
         if (VaadinSession.class.isAssignableFrom(clazz)) {
@@ -48,7 +48,7 @@ public class VaadinEngine extends ServletEngine {
             return "vaadin-ui";
         }
         if (VaadinRequest.class.isAssignableFrom(clazz)
-                || VaadinResponse.class.isAssignableFrom(clazz)) {
+            || VaadinResponse.class.isAssignableFrom(clazz)) {
             return "request";
         }
 

@@ -130,7 +130,7 @@ public interface FieldPredicates {
         return field -> {
             String name = field.getName();
             String getter = (boolean.class.equals(field.getType())
-                                     || Boolean.class.equals(field.getType())
+                             || Boolean.class.equals(field.getType())
                              ? "is"
                              : "get") + name.substring(
                     0,

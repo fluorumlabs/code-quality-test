@@ -246,7 +246,7 @@ public class CollectionInspections extends Suite {
     private static Predicate<Reference> underlyingCollection(Predicate<Class<?>> predicate) {
         return reference -> {
             if (reference.getTarget() == null
-                    || !(SYNCHRONIZED_COLLECTION.isAssignableFrom(reference.getTargetClass()))) {
+                || !(SYNCHRONIZED_COLLECTION.isAssignableFrom(reference.getTargetClass()))) {
                 return false;
             }
             try {

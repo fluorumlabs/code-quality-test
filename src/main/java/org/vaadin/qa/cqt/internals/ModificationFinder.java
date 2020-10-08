@@ -107,15 +107,15 @@ public class ModificationFinder {
                 if (abstractInsnNodes[i] instanceof FieldInsnNode) {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
                     if ((insn.getOpcode() == Opcodes.PUTFIELD
-                                 || insn.getOpcode() == Opcodes.PUTSTATIC)
-                            && fieldName.equals(insn.name)) {
+                         || insn.getOpcode() == Opcodes.PUTSTATIC)
+                        && fieldName.equals(insn.name)) {
                         methodsWithModifications.add(signature);
                     }
                 }
                 if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
                     if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL
-                            || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
+                        || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
                         if (insn.owner.equals(classNode.name)) {
                             selfReferences.computeIfAbsent(
                                     insn.name + insn.desc,
@@ -141,7 +141,7 @@ public class ModificationFinder {
                                     .getOwner()
                                     .equals(classNode.name)) {
                                 callChain = ((Handle) bsmArg).getName()
-                                        + ((Handle) bsmArg).getDesc();
+                                            + ((Handle) bsmArg).getDesc();
                                 selfMatch = true;
                             }
                         }
@@ -165,7 +165,7 @@ public class ModificationFinder {
             String     signature  = unroll.poll();
             MethodNode methodNode = methodRefs.get(signature);
             if (!Modifier.isPrivate(methodNode.access)
-                    || methodNode.name.startsWith("<")) {
+                || methodNode.name.startsWith("<")) {
                 result.add(methodNode.name);
             }
             if (selfReferences.get(signature) != null) {

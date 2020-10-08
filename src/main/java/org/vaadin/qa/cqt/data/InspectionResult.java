@@ -105,19 +105,21 @@ public class InspectionResult {
         for (String group : groups) {
             StringBuilder   output            = new StringBuilder();
             List<Reference> referencesInGroup = referenceGroup.get(group);
-            Reference first = referencesInGroup.iterator().next();
+            Reference       first             = referencesInGroup
+                    .iterator()
+                    .next();
 
             String descriptor = encodeValue("["
-                                                    + inspection.getId()
-                                                    + "] "
-                                                    + first.getId());
+                                            + inspection.getId()
+                                            + "] "
+                                            + first.getId());
 
             String reportTitle = CATEGORY_FORMAT.format(inspection.getCategory())
-                    + "<span class='separator'>: </span>"
-                    + MESSAGE_FORMAT.format(inspection.getMessage())
-                    + " <span class='buttons'><a href='#' onclick='self.event.preventDefault(); comment = prompt(\"This report will be marked as suppressed for selected class/field in \\x2E\\uD835\\uDE8C\\uD835\\uDE9A\\uD835\\uDE9D\\uD835\\uDE92\\uD835\\uDE90\\uD835\\uDE97\\uD835\\uDE98\\uD835\\uDE9B\\uD835\\uDE8E file and will not appear in future scans.\\n\\nExplanation (required):\", \"False positive\"); if (comment !== null && comment.trim() !== \"\") fetch(\"suppress?\"+encodeURIComponent(\"# \"+comment+\"\\n\")+\""
-                    + descriptor
-                    + "\").then(() => self.location.reload());'>Suppress</a></span>\n";
+                                 + "<span class='separator'>: </span>"
+                                 + MESSAGE_FORMAT.format(inspection.getMessage())
+                                 + " <span class='buttons'><a href='#' onclick='self.event.preventDefault(); comment = prompt(\"This report will be marked as suppressed for selected class/field in \\x2E\\uD835\\uDE8C\\uD835\\uDE9A\\uD835\\uDE9D\\uD835\\uDE92\\uD835\\uDE90\\uD835\\uDE97\\uD835\\uDE98\\uD835\\uDE9B\\uD835\\uDE8E file and will not appear in future scans.\\n\\nExplanation (required):\", \"False positive\"); if (comment !== null && comment.trim() !== \"\") fetch(\"suppress?\"+encodeURIComponent(\"# \"+comment+\"\\n\")+\""
+                                 + descriptor
+                                 + "\").then(() => self.location.reload());'>Suppress</a></span>\n";
 
             output
                     .append("<!-- Class: ")

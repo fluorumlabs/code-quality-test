@@ -218,8 +218,8 @@ public final class Reference {
                                  Scanner scanner) {
         Object targetValue = value.getValue();
         Class<?> targetClass = (value.getReferenceType()
-                                        == ReferenceType.POSSIBLE_VALUE && value
-                .getValue() instanceof PossibleValue)
+                                == ReferenceType.POSSIBLE_VALUE
+                                && value.getValue() instanceof PossibleValue)
                                ? ((PossibleValue) value.getValue()).getType()
                                : (targetValue == null
                                   ? Unknown.class
@@ -267,7 +267,7 @@ public final class Reference {
                          : PACKAGE_NAME_FORMAT.format(clazz
                                                               .getPackage()
                                                               .getName() + "."))
-                    + CLASS_NAME_FORMAT.format(String.join(
+                        + CLASS_NAME_FORMAT.format(String.join(
                     ".",
                     classParts
             ));
@@ -333,7 +333,7 @@ public final class Reference {
                 .stream()
                 .filter(ref -> ref.getKey().matchesFilter())
                 .map(e -> e.getKey().formatOwnerClass()
-                        + PARTIAL_FORMAT.format(e.getValue()))
+                          + PARTIAL_FORMAT.format(e.getValue()))
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
@@ -349,11 +349,11 @@ public final class Reference {
             return "";
         } else {
             return VISIBILITY_MODIFIER_FORMAT.format(getFieldModifiers())
-                    + " "
-                    + TYPE_NAME_FORMAT.format(getFieldType())
-                    + " "
-                    + FIELD_NAME_FORMAT.format(field.getName())
-                    + REFERENCE_TYPE_FORMAT.format(referenceType);
+                   + " "
+                   + TYPE_NAME_FORMAT.format(getFieldType())
+                   + " "
+                   + FIELD_NAME_FORMAT.format(field.getName())
+                   + REFERENCE_TYPE_FORMAT.format(referenceType);
         }
     }
 
@@ -402,8 +402,8 @@ public final class Reference {
                             .getScope()
                             .equals(getScope())) {
                         return formatClassName(backreference.ownerClass)
-                                + PARTIAL_FORMAT.format(backreference.formatPartial()
-                                                                + map.get(reference));
+                               + PARTIAL_FORMAT.format(backreference.formatPartial()
+                                                       + map.get(reference));
                     }
                     map.put(
                             backreference,
@@ -438,42 +438,42 @@ public final class Reference {
                     .getMethods()
                     .stream()
                     .map(m -> formatShortClassName(((PossibleValue) target).getOwner())
-                            + "."
-                            + METHOD_VALUE_FORMAT.format(m))
+                              + "."
+                              + METHOD_VALUE_FORMAT.format(m))
                     .collect(Collectors.joining(", "));
             return TYPEHINT_VALUE_FORMAT.format("Possible "
-                                                        + formatShortClassName(targetClass))
-                    + " "
-                    + POSSIBLE_VALUE_FORMAT.format("see " + methods);
+                                                + formatShortClassName(targetClass))
+                   + " "
+                   + POSSIBLE_VALUE_FORMAT.format("see " + methods);
         }
         String formatted;
         if (target instanceof String) {
             return STRING_VALUE_FORMAT.format(target);
         } else if (Modifier.isFinal(targetClass.getModifiers())
-                && (target instanceof Number
-                            || target instanceof Character
-                            || target instanceof Boolean)) {
+                   && (target instanceof Number
+                       || target instanceof Character
+                       || target instanceof Boolean)) {
             return PRIMITIVE_VALUE_FORMAT.format(target);
         } else {
             try {
                 if (targetClass.isArray()) {
                     return TYPEHINT_VALUE_FORMAT.format("("
-                                                                + formatShortClassName(targetClass)
-                                                                + ")")
-                            + " "
-                            + TOSTRING_VALUE_FORMAT.format(Arrays.toString((Object[]) target));
+                                                        + formatShortClassName(targetClass)
+                                                        + ")")
+                           + " "
+                           + TOSTRING_VALUE_FORMAT.format(Arrays.toString((Object[]) target));
                 } else {
                     return TYPEHINT_VALUE_FORMAT.format("("
-                                                                + formatShortClassName(targetClass)
-                                                                + ")")
-                            + " "
-                            + TOSTRING_VALUE_FORMAT.format(target);
+                                                        + formatShortClassName(targetClass)
+                                                        + ")")
+                           + " "
+                           + TOSTRING_VALUE_FORMAT.format(target);
                 }
             } catch (Exception e) {
                 // ignore exceptions during toString
                 return DEFAULT_VALUE_FORMAT.format(formatClassName(targetClass)
-                                                           + "@"
-                                                           + Integer.toHexString(System.identityHashCode(target)));
+                                                   + "@"
+                                                   + Integer.toHexString(System.identityHashCode(target)));
             }
         }
     }
@@ -483,7 +483,7 @@ public final class Reference {
             return "";
         } else {
             String partial = FIELD_NAME_FORMAT.format(field.getName())
-                    + REFERENCE_TYPE_FORMAT.format(referenceType);
+                             + REFERENCE_TYPE_FORMAT.format(referenceType);
             if (Modifier.isStatic(field.getModifiers())) {
                 return "." + STATIC_FORMAT.format(partial);
             } else {
@@ -524,26 +524,26 @@ public final class Reference {
                     .getName()
                     .equals(owner.getClass().getName())) {
                 return owner.getClass().getTypeName()
-                        + ": "
-                        + field
-                        .getDeclaringClass()
-                        .getTypeName()
-                        + ": "
-                        + getFieldModifiers()
-                        + " "
-                        + getFieldType()
-                        + " "
-                        + field.getName()
-                        + referenceType;
+                       + ": "
+                       + field
+                               .getDeclaringClass()
+                               .getTypeName()
+                       + ": "
+                       + getFieldModifiers()
+                       + " "
+                       + getFieldType()
+                       + " "
+                       + field.getName()
+                       + referenceType;
             } else {
                 return field.getDeclaringClass().getTypeName()
-                        + ": "
-                        + getFieldModifiers()
-                        + " "
-                        + getFieldType()
-                        + " "
-                        + field.getName()
-                        + referenceType;
+                       + ": "
+                       + getFieldModifiers()
+                       + " "
+                       + getFieldType()
+                       + " "
+                       + field.getName()
+                       + referenceType;
             }
         }
     }

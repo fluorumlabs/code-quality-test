@@ -132,9 +132,9 @@ public class Scanner {
             ObjectData data         = entry.getValue();
             for (ObjectValue value : data.getValues()) {
                 if (ownerInScope && (value.getField() == null
-                                             || matchesFilter(value
-                                                                      .getField()
-                                                                      .getDeclaringClass()))) {
+                                     || matchesFilter(value
+                                                              .getField()
+                                                              .getDeclaringClass()))) {
                     result.add(Reference.from(
                             entry.getKey(),
                             value,
@@ -217,7 +217,7 @@ public class Scanner {
     public void visit(Object someObject) {
         Object unwrapped = unwrap(someObject);
         output.println("visiting: "
-                               + StringEscapeUtils.escapeHtml4(Objects.toString(unwrapped)));
+                       + StringEscapeUtils.escapeHtml4(Objects.toString(unwrapped)));
         scannerQueue.add(unwrapped);
         processQueue();
     }
@@ -231,7 +231,7 @@ public class Scanner {
                 .getContextClassLoader();
         while (classLoader != null) {
             output.println("class loader: "
-                                   + StringEscapeUtils.escapeHtml4(Objects.toString(classLoader)));
+                           + StringEscapeUtils.escapeHtml4(Objects.toString(classLoader)));
             list(classLoader).forEach(e -> {
                 scannerQueue.add(e);
             });
@@ -275,7 +275,7 @@ public class Scanner {
         );
 
         if (visitingClass.isArray()
-                && !shouldIgnore(visitingClass.getComponentType())) {
+            && !shouldIgnore(visitingClass.getComponentType())) {
             for (Object value : (Object[]) objectToVisit) {
                 if (value != null) {
                     Object unwrapped = unwrap(value);
@@ -295,7 +295,7 @@ public class Scanner {
                         ));
                     }
                     if (!visitedObjects.containsKey(unwrapped)
-                            && shouldCascade(unwrapped.getClass())) {
+                        && shouldCascade(unwrapped.getClass())) {
                         scannerQueue.add(unwrapped);
                     }
                 }
@@ -315,7 +315,7 @@ public class Scanner {
                             field.setAccessible(true);
                             Object value = field.get(objectToVisit);
                             if (value != null
-                                    || possibleFieldValues.isEmpty()) {
+                                || possibleFieldValues.isEmpty()) {
                                 processFieldValue(
                                         objectToVisit,
                                         objectData,
@@ -355,26 +355,26 @@ public class Scanner {
 
     private static boolean shouldIgnore(Class<?> clazz) {
         return clazz.isPrimitive()
-                || clazz.isAnnotation()
-                || ClassLoader.class.isAssignableFrom(clazz)
-                || clazz.equals(Pattern.class)
-                || clazz.equals(String.class)
-                || clazz.equals(Void.class)
-                || clazz.equals(Boolean.class)
-                || clazz.equals(Character.class)
-                || clazz.equals(Byte.class)
-                || clazz.equals(Short.class)
-                || clazz.equals(Integer.class)
-                || clazz.equals(Long.class)
-                || clazz.equals(Float.class)
-                || clazz.equals(Double.class)
-                || clazz.getName().contains("CGLIB$$")
-                || clazz.getName().contains("$Proxy")
-                || (clazz.getPackage() != null && clazz
+               || clazz.isAnnotation()
+               || ClassLoader.class.isAssignableFrom(clazz)
+               || clazz.equals(Pattern.class)
+               || clazz.equals(String.class)
+               || clazz.equals(Void.class)
+               || clazz.equals(Boolean.class)
+               || clazz.equals(Character.class)
+               || clazz.equals(Byte.class)
+               || clazz.equals(Short.class)
+               || clazz.equals(Integer.class)
+               || clazz.equals(Long.class)
+               || clazz.equals(Float.class)
+               || clazz.equals(Double.class)
+               || clazz.getName().contains("CGLIB$$")
+               || clazz.getName().contains("$Proxy")
+               || (clazz.getPackage() != null && clazz
                 .getPackage()
                 .getName()
                 .startsWith(CodeQualityTestServer.class.getPackage().getName()))
-                || (clazz.getPackage() != null && clazz
+               || (clazz.getPackage() != null && clazz
                 .getPackage()
                 .equals(Field.class.getPackage()));
     }
@@ -392,7 +392,7 @@ public class Scanner {
         if (value != null) {
             Class<?> valueClass = value.getClass();
             if (valueClass.isArray()
-                    && !shouldIgnore(valueClass.getComponentType())) {
+                && !shouldIgnore(valueClass.getComponentType())) {
                 for (Object o : (Object[]) value) {
                     pushValue(
                             objectToVisit,
@@ -530,8 +530,8 @@ public class Scanner {
                 ));
             }
             if (cascade
-                    && !visitedObjects.containsKey(unwrapped)
-                    && shouldCascade(unwrapped.getClass())) {
+                && !visitedObjects.containsKey(unwrapped)
+                && shouldCascade(unwrapped.getClass())) {
                 scannerQueue.add(unwrapped);
             }
         }
@@ -697,12 +697,9 @@ public class Scanner {
             long now  = System.nanoTime();
             long diff = now - stamp;
             if (diff >= DISPLAY_INTERVAL) {
-                output.println("<div class='frame'>candidates: "
-                                       + (visitedObjects.size()
-                                                  - before)
-                                       + " ("
-                                       + scannerQueue.size()
-                                       + ")</div>");
+                output.println("<div class='frame'>candidates: " + (
+                        visitedObjects.size()
+                        - before) + " (" + scannerQueue.size() + ")</div>");
                 stamp = now;
             }
             if (objectToVisit instanceof Class) {
@@ -732,7 +729,8 @@ public class Scanner {
                 .entrySet()
                 .stream()
                 .filter(entry -> entry.getKey() != null
-                        && entry.getValue().getEffectiveScope() != null)
+                                 && entry.getValue().getEffectiveScope()
+                                    != null)
                 .forEach(entry -> {
                     scopeStats.computeIfAbsent(
                             entry.getValue().getEffectiveScope(),
@@ -762,7 +760,7 @@ public class Scanner {
                     .contains("$Lambda")) { // Do not propagate through lambdas
                 for (ObjectValue objectValue : objectData.getValues()) {
                     if (objectValue
-                            != null) { // Don't propagate scope to values
+                        != null) { // Don't propagate scope to values
                         ObjectData other = visitedObjects.get(objectValue.getValue());
                         if (other != null && EngineInstance
                                 .get()
@@ -812,8 +810,8 @@ public class Scanner {
         );
 
         if (objectToVisit.getSuperclass() != null
-                && !visitedObjects.containsKey(objectToVisit.getSuperclass())
-                && !shouldIgnore(objectToVisit.getSuperclass())) {
+            && !visitedObjects.containsKey(objectToVisit.getSuperclass())
+            && !shouldIgnore(objectToVisit.getSuperclass())) {
             scannerQueue.add(objectToVisit.getSuperclass());
         }
 
@@ -825,8 +823,8 @@ public class Scanner {
 
         for (Field field : Unreflection.getDeclaredFields(objectToVisit)) {
             if (Modifier.isStatic(field.getModifiers()) && !(field.isSynthetic()
-                                                                     && "$assertionsDisabled"
-                    .equals(field.getName()))) {
+                                                             && "$assertionsDisabled"
+                                                                     .equals(field.getName()))) {
                 Set<PossibleValue> possibleFieldValues = Optional
                         .ofNullable(computedPotentialValues.get(field
                                                                         .getDeclaringClass()

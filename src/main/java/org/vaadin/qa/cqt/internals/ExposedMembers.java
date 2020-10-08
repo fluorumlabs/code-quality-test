@@ -66,8 +66,8 @@ public class ExposedMembers {
      */
     public static boolean isFieldExposedForReading(Field field) {
         return EXPOSED_READING_FIELDS.contains(Type.getInternalName(field.getDeclaringClass())
-                                                       + "."
-                                                       + field.getName());
+                                               + "."
+                                               + field.getName());
     }
 
     /**
@@ -80,8 +80,8 @@ public class ExposedMembers {
      */
     public static boolean isFieldExposedForWriting(Field field) {
         return EXPOSED_WRITING_FIELDS.contains(Type.getInternalName(field.getDeclaringClass())
-                                                       + "."
-                                                       + field.getName());
+                                               + "."
+                                               + field.getName());
     }
 
     /**
@@ -94,9 +94,9 @@ public class ExposedMembers {
      */
     public static boolean isMethodExposed(Method method) {
         return EXPOSED_METHODS.contains(Type.getInternalName(method.getDeclaringClass())
-                                                + "."
-                                                + method.getName()
-                                                + Type.getMethodDescriptor(method));
+                                        + "."
+                                        + method.getName()
+                                        + Type.getMethodDescriptor(method));
     }
 
     /**
@@ -165,24 +165,24 @@ public class ExposedMembers {
                     FieldInsnNode insn = (FieldInsnNode) abstractInsnNodes[i];
                     if (!insn.owner.equals(classNode.name)) {
                         if (insn.getOpcode() == Opcodes.PUTFIELD
-                                || insn.getOpcode() == Opcodes.PUTSTATIC) {
+                            || insn.getOpcode() == Opcodes.PUTSTATIC) {
                             EXPOSED_WRITING_FIELDS.add(insn.owner
-                                                               + "."
-                                                               + insn.name);
+                                                       + "."
+                                                       + insn.name);
                         } else if (insn.getOpcode() == Opcodes.GETFIELD
-                                || insn.getOpcode() == Opcodes.GETSTATIC) {
+                                   || insn.getOpcode() == Opcodes.GETSTATIC) {
                             EXPOSED_READING_FIELDS.add(insn.owner
-                                                               + "."
-                                                               + insn.name);
+                                                       + "."
+                                                       + insn.name);
                         }
                     }
                 } else if (abstractInsnNodes[i] instanceof MethodInsnNode) {
                     MethodInsnNode insn = (MethodInsnNode) abstractInsnNodes[i];
                     if (!insn.owner.equals(classNode.name)) {
                         EXPOSED_METHODS.add(insn.owner
-                                                    + "."
-                                                    + insn.name
-                                                    + insn.desc);
+                                            + "."
+                                            + insn.name
+                                            + insn.desc);
                     }
                 }
             }
