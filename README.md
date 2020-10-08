@@ -1,5 +1,8 @@
 # Code Quality Test
  
+ [![Maven metadata URL](https://img.shields.io/maven-metadata/v/http/oss.sonatype.org/content/groups/public/com/github/fluorumlabs/code-quality-test/maven-metadata.xml.svg)](https://oss.sonatype.org/content/groups/public/com/github/fluorumlabs/code-quality-test/) 
+ [![GitHub](https://img.shields.io/github/license/fluorumlabs/code-quality-test.svg)](https://github.com/fluorumlabs/antipatterns/blob/master/LICENSE)
+ 
 Code Quality Test (or CQT) is an in-process static state analyzer. It uses a
 combination of application state and bytecode analysis to find potential
 problems, such as concurrency issues or mutable singleton objects.
