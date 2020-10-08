@@ -10,7 +10,9 @@ instantiated objects and their relationship.
 
 It has minimum dependencies (only `common-text`) and is framework-agnostic, 
 even though it has built-in support for Spring-, Vaadin- or Servlet-based
-applications.
+applications. 
+
+_Note: In order to limit number of dependencies, internally `jdk.internal.asm` is used for ASM. While this works in Java 8 - Java 14, there might be some edgecases when it'll fail._
 
 ## Usage
 
@@ -18,7 +20,7 @@ applications.
 
 ```xml
 <dependency>
-    <groupId>org.vaadin.qa</groupId>
+    <groupId>com.github.fluorumlabs</groupId>
     <artifactId>code-quality-test</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -28,6 +30,8 @@ applications.
 that is invoked during application startup):
 
 ```java
+import com.github.fluorumlabs.cqt.CodeQualityTestServer;
+
 @SpringBootApplication
 public class Application extends SpringBootServletInitializer {
 
