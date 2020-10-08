@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt.predicates;
 
 import java.lang.reflect.Member;
@@ -13,6 +36,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is abstract.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isAbstract() {
@@ -23,6 +47,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is final.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isFinal() {
@@ -33,6 +58,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is native.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNative() {
@@ -43,6 +69,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not abstract.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotAbstract() {
@@ -53,6 +80,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not final.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotFinal() {
@@ -63,6 +91,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not native.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotNative() {
@@ -73,6 +102,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not private.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotPrivate() {
@@ -83,6 +113,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not protected.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotProtected() {
@@ -93,6 +124,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not public.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotPublic() {
@@ -103,6 +135,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not static.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotStatic() {
@@ -113,6 +146,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not strict.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotStrict() {
@@ -123,6 +157,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not synchronized.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotSynchronized() {
@@ -133,6 +168,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not synthetic.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotSynthetic() {
@@ -143,6 +179,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not transient.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotTransient() {
@@ -153,6 +190,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is not volatile.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isNotVolatile() {
@@ -163,6 +201,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is private.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isPrivate() {
@@ -173,6 +212,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is protected.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isProtected() {
@@ -183,6 +223,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is public.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isPublic() {
@@ -193,6 +234,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is static.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isStatic() {
@@ -203,6 +245,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is strict.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isStrict() {
@@ -213,6 +256,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is synchronized.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isSynchronized() {
@@ -223,6 +267,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is synthetic.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isSynthetic() {
@@ -233,6 +278,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is transient.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isTransient() {
@@ -243,6 +289,7 @@ public interface MemberPredicates {
      * Predicate testing if {@link Member} is volatile.
      *
      * @param <T> the type parameter
+     *
      * @return the predicate
      */
     default <T extends Member> Predicate<T> isVolatile() {

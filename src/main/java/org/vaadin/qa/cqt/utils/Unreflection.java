@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt.utils;
 
 import java.lang.invoke.MethodHandle;
@@ -28,40 +51,42 @@ public final class Unreflection {
     static {
         try {
             // Get the protected static field IMPL_LOOKUP of MethodHandles.Lookup
-            Field lookup = MethodHandles.Lookup.class.getDeclaredField(
-                    "IMPL_LOOKUP");
+            Field lookup = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
             lookup.setAccessible(true);
             // Expose a static IMPL_LOOKUP
             LOOKUP_TRUSTED = (MethodHandles.Lookup) lookup.get(null);
 
-            GET_DECLARED_FIELDS = lookupAll().findVirtual(Class.class,
-                                                          "getDeclaredFields",
-                                                          MethodType.methodType(
-                                                                  Field[].class)
+            GET_DECLARED_FIELDS       = lookupAll().findVirtual(
+                    Class.class,
+                    "getDeclaredFields",
+                    MethodType.methodType(Field[].class)
             );
-            GET_DECLARED_CONSTRUCTORS = lookupAll().findVirtual(Class.class,
-                                                                "getDeclaredConstructors",
-                                                                MethodType.methodType(
-                                                                        Constructor[].class)
+            GET_DECLARED_CONSTRUCTORS = lookupAll().findVirtual(
+                    Class.class,
+                    "getDeclaredConstructors",
+                    MethodType.methodType(Constructor[].class)
             );
-            GET_DECLARED_FIELD = lookupAll().findVirtual(Class.class,
-                                                         "getDeclaredField",
-                                                         MethodType.methodType(
-                                                                 Field.class,
-                                                                 String.class
-                                                         )
+            GET_DECLARED_FIELD        = lookupAll().findVirtual(
+                    Class.class,
+                    "getDeclaredField",
+                    MethodType.methodType(
+                            Field.class,
+                            String.class
+                    )
             );
-            GET_DECLARED_METHOD = lookupAll().findVirtual(Class.class,
-                                                          "getDeclaredMethod",
-                                                          MethodType.methodType(
-                                                                  Method.class,
-                                                                  String.class,
-                                                                  Class[].class
-                                                          )
+            GET_DECLARED_METHOD       = lookupAll().findVirtual(
+                    Class.class,
+                    "getDeclaredMethod",
+                    MethodType.methodType(
+                            Method.class,
+                            String.class,
+                            Class[].class
+                    )
             );
         } catch (IllegalAccessException | IllegalArgumentException | NoSuchFieldException | SecurityException | NoSuchMethodException e) {
-            throw new UnsupportedOperationException("Unable to initialize UnReflection",
-                                                    e
+            throw new UnsupportedOperationException(
+                    "Unable to initialize UnReflection",
+                    e
             );
         }
     }
@@ -73,11 +98,13 @@ public final class Unreflection {
      * Get declared constructors of Class.
      *
      * @param clazz the clazz
+     *
      * @return the array of constructors
      */
     public static Constructor<?>[] getDeclaredConstructors(Class<?> clazz) {
         try {
-            return (Constructor<?>[]) GET_DECLARED_CONSTRUCTORS.bindTo(clazz)
+            return (Constructor<?>[]) GET_DECLARED_CONSTRUCTORS
+                    .bindTo(clazz)
                     .invokeWithArguments();
         } catch (NoClassDefFoundError e) {
             return new Constructor<?>[0];
@@ -94,13 +121,15 @@ public final class Unreflection {
      *
      * @param clazz the clazz
      * @param name  the name
+     *
      * @return the declared field
      * @throws NoSuchFieldException field does not exist
      */
     public static Field getDeclaredField(Class<?> clazz, String name) throws
                                                                       NoSuchFieldException {
         try {
-            return (Field) GET_DECLARED_FIELD.bindTo(clazz)
+            return (Field) GET_DECLARED_FIELD
+                    .bindTo(clazz)
                     .invokeWithArguments(name);
         } catch (Throwable e) {
             throw new NoSuchFieldException("Cannot get getDeclaredField for "
@@ -114,17 +143,20 @@ public final class Unreflection {
      * Get declared fields of class.
      *
      * @param clazz the clazz
+     *
      * @return the array of fields
      */
     public static Field[] getDeclaredFields(Class<?> clazz) {
         try {
-            return (Field[]) GET_DECLARED_FIELDS.bindTo(clazz)
+            return (Field[]) GET_DECLARED_FIELDS
+                    .bindTo(clazz)
                     .invokeWithArguments();
         } catch (NoClassDefFoundError e) {
             return new Field[0];
         } catch (Throwable e) {
-            throw new UnsupportedOperationException("Cannot get getDeclaredFields of " + clazz.getName(),
-                                                    e
+            throw new UnsupportedOperationException(
+                    "Cannot get getDeclaredFields of " + clazz.getName(),
+                    e
             );
         }
     }
@@ -135,6 +167,7 @@ public final class Unreflection {
      * @param clazz the clazz
      * @param name  the name
      * @param args  the args
+     *
      * @return the declared method
      * @throws NoSuchMethodException method does not exist
      */
@@ -143,8 +176,12 @@ public final class Unreflection {
                                            Class<?>... args) throws
                                                              NoSuchMethodException {
         try {
-            return (Method) GET_DECLARED_METHOD.bindTo(clazz)
-                    .invokeWithArguments(name, args);
+            return (Method) GET_DECLARED_METHOD
+                    .bindTo(clazz)
+                    .invokeWithArguments(
+                            name,
+                            args
+                    );
         } catch (Throwable e) {
             throw new NoSuchMethodException("Cannot get getDeclaredMethod for "
                                                     + clazz.getName()
@@ -161,6 +198,7 @@ public final class Unreflection {
      * @param declaringClass the declaring class
      * @param name           the name
      * @param type           the type
+     *
      * @return read value
      */
     public static <T> T readField(Object instance,
@@ -168,40 +206,18 @@ public final class Unreflection {
                                   String name,
                                   Class<?> type) {
         try {
-            return (T) lookupAll().findGetter(declaringClass, name, type)
-                    .bindTo(instance)
-                    .invokeWithArguments();
+            return (T) lookupAll().findGetter(
+                    declaringClass,
+                    name,
+                    type
+            ).bindTo(instance).invokeWithArguments();
         } catch (Throwable e) {
-            throw new UnsupportedOperationException("Cannot read field "
-                                                            + name
-                                                            + " of "
-                                                            + declaringClass.getName(),
-                                                    e
-            );
-        }
-    }
-
-    /**
-     * Read static field of class.
-     *
-     * @param <T>            the type parameter
-     * @param declaringClass the declaring class
-     * @param name           the name
-     * @param type           the type
-     * @return the t
-     */
-    public static <T> T readStaticField(Class<?> declaringClass,
-                                        String name,
-                                        Class<?> type) {
-        try {
-            return (T) lookupAll().findStaticGetter(declaringClass, name, type)
-                    .invokeWithArguments();
-        } catch (Throwable e) {
-            throw new UnsupportedOperationException("Cannot read static field "
-                                                            + name
-                                                            + " of "
-                                                            + declaringClass.getName(),
-                                                    e
+            throw new UnsupportedOperationException(
+                    "Cannot read field "
+                            + name
+                            + " of "
+                            + declaringClass.getName(),
+                    e
             );
         }
     }
@@ -214,6 +230,34 @@ public final class Unreflection {
      */
     private static MethodHandles.Lookup lookupAll() {
         return LOOKUP_TRUSTED;
+    }
+
+    /**
+     * Read static field of class.
+     *
+     * @param <T>            the type parameter
+     * @param declaringClass the declaring class
+     * @param name           the name
+     * @param type           the type
+     *
+     * @return the t
+     */
+    public static <T> T readStaticField(Class<?> declaringClass,
+                                        String name,
+                                        Class<?> type) {
+        try {
+            return (T) lookupAll().findStaticGetter(
+                    declaringClass,
+                    name,
+                    type
+            ).invokeWithArguments();
+        } catch (Throwable e) {
+            throw new UnsupportedOperationException(
+                    "Cannot read static field " + name + " of " + declaringClass
+                            .getName(),
+                    e
+            );
+        }
     }
 
 }

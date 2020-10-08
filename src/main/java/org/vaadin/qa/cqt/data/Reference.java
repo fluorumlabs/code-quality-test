@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt.data;
 
 import org.vaadin.qa.cqt.internals.ObjectData;
@@ -17,99 +40,119 @@ import java.util.stream.Collectors;
 import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
 
 /**
- * Reference holding inspection subject (object-object relationship, for
- * example field or collection-item).
+ * Reference holding inspection subject (object-object relationship, for example
+ * field or collection-item).
  */
 public final class Reference {
 
-    private static final HtmlFormatter CLASS_NAME_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter CLASS_NAME_FORMAT = value()
+            .escapeHtml()
             .styled("class");
 
-    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().styled(
-            "value default");
+    private static final HtmlFormatter DEFAULT_VALUE_FORMAT = value().styled("value default");
 
-    private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile("<span class=\"class\"></span>",
-                                                                       Pattern.LITERAL
+    private static final Pattern EMPTY_CLASS_PATTERN = Pattern.compile(
+            "<span class=\"class\"></span>",
+            Pattern.LITERAL
     );
 
-    private static final HtmlFormatter FIELD_NAME_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter FIELD_NAME_FORMAT = value()
+            .escapeHtml()
             .styled("field");
 
-    private static final HtmlFormatter GENERIC_ARGUMENTS_FORMAT = value().styled(
-            "generic");
+    private static final HtmlFormatter GENERIC_ARGUMENTS_FORMAT = value().styled("generic");
 
-    private static final Pattern GT_PATTERN = Pattern.compile("&gt;",
-                                                              Pattern.LITERAL
+    private static final Pattern GT_PATTERN = Pattern.compile(
+            "&gt;",
+            Pattern.LITERAL
     );
 
-    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile(
-            "(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
+    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile("(\\b([A-Za-z0-9][A-Za-z0-9_]*)[$]\\b)");
 
-    private static final Pattern LT_PATTERN = Pattern.compile("&lt;",
-                                                              Pattern.LITERAL
+    private static final Pattern LT_PATTERN = Pattern.compile(
+            "&lt;",
+            Pattern.LITERAL
     );
 
     private static final int MAX_CONTEXT_PATH_DEPTH = 10;
 
-    private static final Pattern METHOD_ARG_CLASS_PATTERN = Pattern.compile(
-            "(\\{([^}]+)})");
+    private static final Pattern METHOD_ARG_CLASS_PATTERN = Pattern.compile("(\\{([^}]+)})");
 
-    private static final HtmlFormatter METHOD_VALUE_FORMAT = value().escapeHtml()
-            .replace(METHOD_ARG_CLASS_PATTERN, "<span class='class'>$2</span>");
+    private static final HtmlFormatter METHOD_VALUE_FORMAT = value()
+            .escapeHtml()
+            .replace(
+                    METHOD_ARG_CLASS_PATTERN,
+                    "<span class='class'>$2</span>"
+            );
 
-    private static final HtmlFormatter NULL_VALUE_FORMAT = value().styled(
-            "value null");
+    private static final HtmlFormatter NULL_VALUE_FORMAT = value().styled("value null");
 
-    private static final HtmlFormatter PACKAGE_NAME_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter PACKAGE_NAME_FORMAT = value()
+            .escapeHtml()
             .styled("class package");
 
     private static final HtmlFormatter PARTIAL_FORMAT = value().styled("partial");
 
-    private static final HtmlFormatter POSSIBLE_VALUE_FORMAT = value().styled(
-            "value possible");
+    private static final HtmlFormatter POSSIBLE_VALUE_FORMAT = value().styled("value possible");
 
-    private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter PRIMITIVE_VALUE_FORMAT = value()
+            .escapeHtml()
             .styled("value primitive");
 
-    private static final HtmlFormatter REFERENCE_TYPE_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter REFERENCE_TYPE_FORMAT = value()
+            .escapeHtml()
             .styled("reference");
 
-    private static final HtmlFormatter SCOPE_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter SCOPE_FORMAT = value()
+            .escapeHtml()
             .styled("scope");
 
     private static final Pattern SEPARATOR_PATTERN = Pattern.compile("(,\\s*)");
 
     private static final HtmlFormatter STATIC_FORMAT = value().styled("static");
 
-    private static final HtmlFormatter STRING_VALUE_FORMAT = value().removeNewLines()
+    private static final HtmlFormatter STRING_VALUE_FORMAT = value()
+            .removeNewLines()
             .escapeJava()
             .wrapWith("\"")
             .trimTo(240)
             .escapeHtml()
             .styled("value string");
 
-    private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value().removeNewLines()
+    private static final HtmlFormatter TOSTRING_VALUE_FORMAT = value()
+            .removeNewLines()
             .trimTo(240)
             .escapeHtml()
             .styled("value");
 
-    private static final HtmlFormatter TYPEHINT_VALUE_FORMAT = value().styled(
-            "typehint");
+    private static final HtmlFormatter TYPEHINT_VALUE_FORMAT = value().styled("typehint");
 
-    private static final HtmlFormatter TYPE_NAME_FORMAT = value().removePackages()
+    private static final HtmlFormatter TYPE_NAME_FORMAT = value()
+            .removePackages()
             .escapeHtml()
-            .replace(INNER_CLASS_PATTERN, "$2.")
+            .replace(
+                    INNER_CLASS_PATTERN,
+                    "$2."
+            )
             .replace(
                     LT_PATTERN,
                     "</span><span class=\"generic\">&lt;<span class=\"class\">"
             )
-            .replace(GT_PATTERN, "</span>&gt;</span><span class=\"class\">")
-            .replace(SEPARATOR_PATTERN, "</span>$1<span class=\"class\">")
+            .replace(
+                    GT_PATTERN,
+                    "</span>&gt;</span><span class=\"class\">"
+            )
+            .replace(
+                    SEPARATOR_PATTERN,
+                    "</span>$1<span class=\"class\">"
+            )
             .styled("class")
-            .replace(EMPTY_CLASS_PATTERN, "");
+            .replace(
+                    EMPTY_CLASS_PATTERN,
+                    ""
+            );
 
-    private static final HtmlFormatter VISIBILITY_MODIFIER_FORMAT = value().styled(
-            "modifier");
+    private static final HtmlFormatter VISIBILITY_MODIFIER_FORMAT = value().styled("modifier");
 
     @Nullable
     private final Field field;
@@ -151,10 +194,14 @@ public final class Reference {
      * Format class name as HTML.
      *
      * @param clazz the clazz
+     *
      * @return the class name in HTML format
      */
     public static String formatClassName(Class<?> clazz) {
-        return formatClassName(clazz, true);
+        return formatClassName(
+                clazz,
+                true
+        );
     }
 
     /**
@@ -163,6 +210,7 @@ public final class Reference {
      * @param owner   the owner object (LHS of relationship)
      * @param value   the value (RHS of relationship)
      * @param scanner the scanner instance
+     *
      * @return the reference
      */
     public static Reference from(Object owner,
@@ -184,22 +232,25 @@ public final class Reference {
                          ? (Class<?>) owner
                          : owner.getClass();
         }
-        return new Reference(targetValue,
-                             targetClass,
-                             owner instanceof Class ? null : owner,
-                             ownerClass,
-                             scanner.getData(owner),
-                             value.getReferenceType(),
-                             value.getField(),
-                             scanner
+        return new Reference(
+                targetValue,
+                targetClass,
+                owner instanceof Class ? null : owner,
+                ownerClass,
+                scanner.getData(owner),
+                value.getReferenceType(),
+                value.getField(),
+                scanner
         );
     }
 
     private static String formatClassName(Class<?> clazz,
                                           boolean includePackage) {
         if (clazz.isArray()) {
-            return formatClassName(clazz.getComponentType(), includePackage)
-                    + REFERENCE_TYPE_FORMAT.format("[]");
+            return formatClassName(
+                    clazz.getComponentType(),
+                    includePackage
+            ) + REFERENCE_TYPE_FORMAT.format("[]");
         }
 
         Deque<String> classParts   = new LinkedList<>();
@@ -213,11 +264,18 @@ public final class Reference {
         if (includePackage) {
             className = (clazz.getPackage() == null
                          ? ""
-                         : PACKAGE_NAME_FORMAT.format(clazz.getPackage()
+                         : PACKAGE_NAME_FORMAT.format(clazz
+                                                              .getPackage()
                                                               .getName() + "."))
-                    + CLASS_NAME_FORMAT.format(String.join(".", classParts));
+                    + CLASS_NAME_FORMAT.format(String.join(
+                    ".",
+                    classParts
+            ));
         } else {
-            className = CLASS_NAME_FORMAT.format(String.join(".", classParts));
+            className = CLASS_NAME_FORMAT.format(String.join(
+                    ".",
+                    classParts
+            ));
         }
 
         StringBuilder sb = new StringBuilder(64);
@@ -240,7 +298,10 @@ public final class Reference {
     }
 
     private static String formatShortClassName(Class<?> clazz) {
-        return formatClassName(clazz, false);
+        return formatClassName(
+                clazz,
+                false
+        );
     }
 
     /**
@@ -257,17 +318,22 @@ public final class Reference {
         String formattedField = formatField();
 
         for (Reference backreference : scanner.getBackreferences(target)) {
-            if (backreference.owner != owner || !backreference.formatField()
+            if (backreference.owner != owner || !backreference
+                    .formatField()
                     .equals(formattedField)) {
-                map.put(backreference, backreference.formatPartial());
+                map.put(
+                        backreference,
+                        backreference.formatPartial()
+                );
             }
         }
 
-        return map.entrySet()
+        return map
+                .entrySet()
                 .stream()
                 .filter(ref -> ref.getKey().matchesFilter())
-                .map(e -> e.getKey().formatOwnerClass() + PARTIAL_FORMAT.format(
-                        e.getValue()))
+                .map(e -> e.getKey().formatOwnerClass()
+                        + PARTIAL_FORMAT.format(e.getValue()))
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
@@ -316,7 +382,10 @@ public final class Reference {
         }
         Map<Reference, String> map            = new HashMap<>();
         Map<Object, Boolean>   visitedObjects = new IdentityHashMap<>();
-        map.put(this, "");
+        map.put(
+                this,
+                ""
+        );
 
         for (int i = 0; i < MAX_CONTEXT_PATH_DEPTH; i++) {
             List<Reference> refList = new ArrayList<>(map.keySet());
@@ -324,17 +393,20 @@ public final class Reference {
                 if (visitedObjects.containsKey(reference.owner)) {
                     continue;
                 }
-                visitedObjects.put(reference.owner, true);
-                for (Reference backreference : scanner.getBackreferences(
-                        reference.owner)) {
-                    if (backreference.hasOwnScope() && backreference.getScope()
+                visitedObjects.put(
+                        reference.owner,
+                        true
+                );
+                for (Reference backreference : scanner.getBackreferences(reference.owner)) {
+                    if (backreference.hasOwnScope() && backreference
+                            .getScope()
                             .equals(getScope())) {
                         return formatClassName(backreference.ownerClass)
                                 + PARTIAL_FORMAT.format(backreference.formatPartial()
-                                                                + map.get(
-                                reference));
+                                                                + map.get(reference));
                     }
-                    map.put(backreference,
+                    map.put(
+                            backreference,
                             backreference.formatPartial() + map.get(reference)
                     );
                 }
@@ -362,16 +434,17 @@ public final class Reference {
             return NULL_VALUE_FORMAT.format("null");
         }
         if (target instanceof PossibleValue) {
-            String methods = ((PossibleValue) target).getMethods()
+            String methods = ((PossibleValue) target)
+                    .getMethods()
                     .stream()
                     .map(m -> formatShortClassName(((PossibleValue) target).getOwner())
                             + "."
                             + METHOD_VALUE_FORMAT.format(m))
                     .collect(Collectors.joining(", "));
             return TYPEHINT_VALUE_FORMAT.format("Possible "
-                                                        + formatShortClassName(
-                    targetClass)) + " " + POSSIBLE_VALUE_FORMAT.format("see "
-                                                                               + methods);
+                                                        + formatShortClassName(targetClass))
+                    + " "
+                    + POSSIBLE_VALUE_FORMAT.format("see " + methods);
         }
         String formatted;
         if (target instanceof String) {
@@ -385,15 +458,13 @@ public final class Reference {
             try {
                 if (targetClass.isArray()) {
                     return TYPEHINT_VALUE_FORMAT.format("("
-                                                                + formatShortClassName(
-                            targetClass)
+                                                                + formatShortClassName(targetClass)
                                                                 + ")")
                             + " "
                             + TOSTRING_VALUE_FORMAT.format(Arrays.toString((Object[]) target));
                 } else {
                     return TYPEHINT_VALUE_FORMAT.format("("
-                                                                + formatShortClassName(
-                            targetClass)
+                                                                + formatShortClassName(targetClass)
                                                                 + ")")
                             + " "
                             + TOSTRING_VALUE_FORMAT.format(target);
@@ -402,8 +473,7 @@ public final class Reference {
                 // ignore exceptions during toString
                 return DEFAULT_VALUE_FORMAT.format(formatClassName(targetClass)
                                                            + "@"
-                                                           + Integer.toHexString(
-                        System.identityHashCode(target)));
+                                                           + Integer.toHexString(System.identityHashCode(target)));
             }
         }
     }
@@ -449,12 +519,15 @@ public final class Reference {
         if (field == null) {
             return ownerClass.getTypeName();
         } else {
-            if (owner != null && !field.getDeclaringClass()
+            if (owner != null && !field
+                    .getDeclaringClass()
                     .getName()
                     .equals(owner.getClass().getName())) {
                 return owner.getClass().getTypeName()
                         + ": "
-                        + field.getDeclaringClass().getTypeName()
+                        + field
+                        .getDeclaringClass()
+                        .getTypeName()
                         + ": "
                         + getFieldModifiers()
                         + " "
@@ -473,6 +546,20 @@ public final class Reference {
                         + referenceType;
             }
         }
+    }
+
+    private String getFieldModifiers() {
+        if (field == null) {
+            return "";
+        }
+        return Modifier.toString(field.getModifiers());
+    }
+
+    private String getFieldType() {
+        if (field == null) {
+            return "";
+        }
+        return field.getGenericType().getTypeName();
     }
 
     /**
@@ -537,20 +624,6 @@ public final class Reference {
      */
     public Class<?> getTargetClass() {
         return targetClass;
-    }
-
-    private String getFieldModifiers() {
-        if (field == null) {
-            return "";
-        }
-        return Modifier.toString(field.getModifiers());
-    }
-
-    private String getFieldType() {
-        if (field == null) {
-            return "";
-        }
-        return field.getGenericType().getTypeName();
     }
 
 }

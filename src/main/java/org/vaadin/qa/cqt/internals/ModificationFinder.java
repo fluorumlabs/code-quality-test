@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt.internals;
 
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -37,7 +60,9 @@ public class ModificationFinder {
      * Test if the field is not modified by methods listed in argument
      *
      * @param methodNames the method names
-     * @return {@code true} if there are methods updating this field that are not listed in arguments
+     *
+     * @return {@code true} if there are methods updating this field that are
+     *         not listed in arguments
      */
     public boolean modifiedByNot(String... methodNames) {
         try {
@@ -55,7 +80,10 @@ public class ModificationFinder {
                                                AnalyzerException {
         ClassNode   classNode = new ClassNode();
         ClassReader cr        = new ClassReader(clazz.getName());
-        cr.accept(classNode, 0);
+        cr.accept(
+                classNode,
+                0
+        );
 
         Map<String, Set<String>> selfReferences           = new HashMap<>();
         Map<String, MethodNode>  methodRefs               = new HashMap<>();
@@ -63,10 +91,16 @@ public class ModificationFinder {
 
         for (MethodNode method : classNode.methods) {
             String signature = method.name + method.desc;
-            methodRefs.put(method.name + method.desc, method);
+            methodRefs.put(
+                    method.name + method.desc,
+                    method
+            );
 
             Analyzer<SourceValue> analyzer = new Analyzer<>(new SourceInterpreter());
-            analyzer.analyze(classNode.name, method);
+            analyzer.analyze(
+                    classNode.name,
+                    method
+            );
 
             AbstractInsnNode[] abstractInsnNodes = method.instructions.toArray();
             for (int i = 0; i < abstractInsnNodes.length; i++) {
@@ -83,19 +117,17 @@ public class ModificationFinder {
                     if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL
                             || insn.getOpcode() == Opcodes.INVOKEINTERFACE) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences.computeIfAbsent(insn.name
-                                                                   + insn.desc,
-                                                           s -> new HashSet<>()
-                            )
-                                    .add(signature);
+                            selfReferences.computeIfAbsent(
+                                    insn.name + insn.desc,
+                                    s -> new HashSet<>()
+                            ).add(signature);
                         }
                     } else if (insn.getOpcode() == Opcodes.INVOKESTATIC) {
                         if (insn.owner.equals(classNode.name)) {
-                            selfReferences.computeIfAbsent(insn.name
-                                                                   + insn.desc,
-                                                           s -> new HashSet<>()
-                            )
-                                    .add(signature);
+                            selfReferences.computeIfAbsent(
+                                    insn.name + insn.desc,
+                                    s -> new HashSet<>()
+                            ).add(signature);
                         }
                     }
                 } else if (abstractInsnNodes[i] instanceof InvokeDynamicInsnNode) {
@@ -105,7 +137,8 @@ public class ModificationFinder {
                     String  callChain = null;
                     for (Object bsmArg : insn.bsmArgs) {
                         if (bsmArg instanceof Handle) {
-                            if (((Handle) bsmArg).getOwner()
+                            if (((Handle) bsmArg)
+                                    .getOwner()
                                     .equals(classNode.name)) {
                                 callChain = ((Handle) bsmArg).getName()
                                         + ((Handle) bsmArg).getDesc();
@@ -115,8 +148,9 @@ public class ModificationFinder {
                     }
 
                     if (selfMatch) {
-                        selfReferences.computeIfAbsent(callChain,
-                                                       s -> new HashSet<>()
+                        selfReferences.computeIfAbsent(
+                                callChain,
+                                s -> new HashSet<>()
                         ).add(signature);
                     }
                 }

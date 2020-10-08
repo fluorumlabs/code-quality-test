@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt;
 
 import org.vaadin.qa.cqt.annotations.Disabled;
@@ -35,9 +58,40 @@ public class Suite
     private Scanner scanner;
 
     /**
+     * Predicate testing if any of {@link Reference} owner object backreferences
+     * conform to rule.
+     *
+     * @param referencePredicate the reference predicate
+     *
+     * @return the predicate
+     */
+    public Predicate<Reference> backreference(Predicate<Reference> referencePredicate) {
+        return reference -> scanner
+                .getBackreferences(reference.getOwner())
+                .stream()
+                .anyMatch(referencePredicate);
+    }
+
+    /**
+     * Predicate testing if any of {@link Reference} owner object backreferences
+     * conform to rules.
+     *
+     * @param referencePredicates the reference predicates
+     *
+     * @return the predicate
+     */
+    public Predicate<Reference> backreference(Predicate<Reference>... referencePredicates) {
+        return reference -> scanner
+                .getBackreferences(reference.getOwner())
+                .stream()
+                .anyMatch(and(referencePredicates));
+    }
+
+    /**
      * AND predicate.
      *
      * @param predicates the predicates
+     *
      * @return the predicate
      */
     public Predicate<Reference> and(Predicate<Reference>... predicates) {
@@ -45,50 +99,32 @@ public class Suite
     }
 
     /**
-     * Predicate testing if any of {@link Reference} owner object backreferences conform to rule.
-     *
-     * @param referencePredicate the reference predicate
-     * @return the predicate
-     */
-    public Predicate<Reference> backreference(Predicate<Reference> referencePredicate) {
-        return reference -> scanner.getBackreferences(reference.getOwner())
-                .stream()
-                .anyMatch(referencePredicate);
-    }
-
-    /**
-     * Predicate testing if any of {@link Reference} owner object backreferences conform to rules.
-     *
-     * @param referencePredicates the reference predicates
-     * @return the predicate
-     */
-    public Predicate<Reference> backreference(Predicate<Reference>... referencePredicates) {
-        return reference -> scanner.getBackreferences(reference.getOwner())
-                .stream()
-                .anyMatch(and(referencePredicates));
-    }
-
-    /**
-     * Predicate testing if {@link Field} methods are called from methods other than class initializer.
+     * Predicate testing if {@link Field} methods are called from methods other
+     * than class initializer.
      *
      * @param methodNames the method names
+     *
      * @return the predicate
      */
     public Predicate<Field> calledByNonClassInit(String... methodNames) {
-        return field -> new CallFinder(field,
-                                       Arrays.asList(methodNames)
+        return field -> new CallFinder(
+                field,
+                Arrays.asList(methodNames)
         ).calledByNot("<clinit>");
     }
 
     /**
-     * Predicate testing if {@link Field} methods are called from methods other than class constructor.
+     * Predicate testing if {@link Field} methods are called from methods other
+     * than class constructor.
      *
      * @param methodNames the method names
+     *
      * @return the predicate
      */
     public Predicate<Field> calledByNonConstructor(String... methodNames) {
-        return field -> new CallFinder(field,
-                                       Arrays.asList(methodNames)
+        return field -> new CallFinder(
+                field,
+                Arrays.asList(methodNames)
         ).calledByNot("<init>");
     }
 
@@ -96,6 +132,7 @@ public class Suite
      * Predicate testing if {@link Reference} {@link Field} conforms to rules.
      *
      * @param rules the rules
+     *
      * @return the predicate
      */
     public Predicate<Reference> field(Predicate<Field>... rules) {
@@ -106,6 +143,7 @@ public class Suite
      * Predicate testing if {@link Reference} {@link Field} conforms to rule.
      *
      * @param rule the rule
+     *
      * @return the predicate
      */
     public Predicate<Reference> field(Predicate<Field> rule) {
@@ -113,44 +151,36 @@ public class Suite
     }
 
     /**
-     * Predicate testing if {@link Reference} {@link Field} is exposed for reading.
+     * Predicate testing if {@link Reference} {@link Field} is exposed for
+     * reading.
      * <p>
-     * This means that one of conditions is satisfied:
-     * - Field can be read in other classes
-     * - Field is public
-     * - Field is protected
-     * - There is a getter that returns field value and that getter can be called
-     * in other classes or is public or protected
+     * This means that one of conditions is satisfied: - Field can be read in
+     * other classes - Field is public - Field is protected - There is a getter
+     * that returns field value and that getter can be called in other classes
+     * or is public or protected
      *
      * @return the predicate
      */
     public Predicate<Reference> fieldIsExposedForReading() {
-        return field(isReadInOtherClasses().or(isPublic())
-                             .or(isProtected())).or(fieldIsExposedViaGetter().and(
-                field(getter(isCalledFromOtherClasses().or(isPublic())
-                                     .or(isProtected())))));
+        return field(isReadInOtherClasses()
+                             .or(isPublic())
+                             .or(isProtected())).or(fieldIsExposedViaGetter().and(field(getter(isCalledFromOtherClasses()
+                                                                                                       .or(isPublic())
+                                                                                                       .or(isProtected())))));
     }
 
     /**
-     * Predicate testing if {@link Reference} {@link Field} is exposed for updating.
-     * <p>
-     * This means that one of conditions is satisfied:
-     * - Field can be updated in other classes
-     * - Field is public
-     * - Field is protected
-     * - There is a setter and that setter can be called
-     * in other classes or is public or protected
+     * Predicate testing if {@link Field} is can be read in other classes.
      *
      * @return the predicate
      */
-    public Predicate<Reference> fieldIsExposedForUpdating() {
-        return field(isUpdatedInOtherClasses().or(isPublic()).or(isProtected()))
-                .or(field(setter(isCalledFromOtherClasses().or(isPublic())
-                                         .or(isProtected()))));
+    public Predicate<Field> isReadInOtherClasses() {
+        return ExposedMembers::isFieldExposedForReading;
     }
 
     /**
-     * Predicate testing if {@link Reference} there is a getter for {@link Field} that returns field value.
+     * Predicate testing if {@link Reference} there is a getter for {@link
+     * Field} that returns field value.
      *
      * @return the predicate
      */
@@ -172,30 +202,61 @@ public class Suite
     }
 
     /**
-     * Predicate testing if any of {@link Class} has a method.
-     *
-     * @param name the name
-     * @param args the args
-     * @return the predicate
-     */
-    public Predicate<Class<?>> hasMethod(String name, Class<?>... args) {
-        return cz -> {
-            try {
-                Unreflection.getDeclaredMethod(cz, name, args);
-                return true;
-            } catch (NoSuchMethodException e) {
-                return false;
-            }
-        };
-    }
-
-    /**
      * Predicate testing if {@link Method} is can be called in other classes.
      *
      * @return the predicate
      */
     public Predicate<Method> isCalledFromOtherClasses() {
         return ExposedMembers::isMethodExposed;
+    }
+
+    /**
+     * Predicate testing if {@link Reference} {@link Field} is exposed for
+     * updating.
+     * <p>
+     * This means that one of conditions is satisfied: - Field can be updated in
+     * other classes - Field is public - Field is protected - There is a setter
+     * and that setter can be called in other classes or is public or protected
+     *
+     * @return the predicate
+     */
+    public Predicate<Reference> fieldIsExposedForUpdating() {
+        return field(isUpdatedInOtherClasses().or(isPublic()).or(isProtected()))
+                .or(field(setter(isCalledFromOtherClasses()
+                                         .or(isPublic())
+                                         .or(isProtected()))));
+    }
+
+    /**
+     * Predicate testing if {@link Field} is can be updated in other classes.
+     *
+     * @return the predicate
+     */
+    public Predicate<Field> isUpdatedInOtherClasses() {
+        return ExposedMembers::isFieldExposedForWriting;
+    }
+
+    /**
+     * Predicate testing if any of {@link Class} has a method.
+     *
+     * @param name the name
+     * @param args the args
+     *
+     * @return the predicate
+     */
+    public Predicate<Class<?>> hasMethod(String name, Class<?>... args) {
+        return cz -> {
+            try {
+                Unreflection.getDeclaredMethod(
+                        cz,
+                        name,
+                        args
+                );
+                return true;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
+        };
     }
 
     /**
@@ -211,6 +272,7 @@ public class Suite
      * Predicate testing if {@link Reference} belongs to scopes.
      *
      * @param scopes the scopes
+     *
      * @return the predicate
      */
     public Predicate<Reference> isInScope(String... scopes) {
@@ -238,6 +300,7 @@ public class Suite
      * Predicate testing if {@link Reference} does not belong to scopes.
      *
      * @param scopes the scopes
+     *
      * @return the predicate
      */
     public Predicate<Reference> isNotInScope(String... scopes) {
@@ -253,25 +316,8 @@ public class Suite
     }
 
     /**
-     * Predicate testing if {@link Field} is can be read in other classes.
-     *
-     * @return the predicate
-     */
-    public Predicate<Field> isReadInOtherClasses() {
-        return ExposedMembers::isFieldExposedForReading;
-    }
-
-    /**
-     * Predicate testing if {@link Field} is can be updated in other classes.
-     *
-     * @return the predicate
-     */
-    public Predicate<Field> isUpdatedInOtherClasses() {
-        return ExposedMembers::isFieldExposedForWriting;
-    }
-
-    /**
-     * Predicate testing if {@link Field} is updated in methods other than class initializer.
+     * Predicate testing if {@link Field} is updated in methods other than class
+     * initializer.
      *
      * @return the predicate
      */
@@ -280,7 +326,8 @@ public class Suite
     }
 
     /**
-     * Predicate testing if {@link Field} is updated in methods other than class constructor.
+     * Predicate testing if {@link Field} is updated in methods other than class
+     * constructor.
      *
      * @return the predicate
      */
@@ -292,6 +339,7 @@ public class Suite
      * OR predicate.
      *
      * @param predicates the predicates
+     *
      * @return the predicate
      */
     public Predicate<Reference> or(Predicate<Reference>... predicates) {
@@ -302,6 +350,7 @@ public class Suite
      * Predicate testing if {@link Reference} owner object conforms to rules.
      *
      * @param rules the rules
+     *
      * @return the predicate
      */
     public Predicate<Reference> owner(Predicate<Object>... rules) {
@@ -312,6 +361,7 @@ public class Suite
      * Predicate testing if {@link Reference} owner object conforms to rule.
      *
      * @param rule the rule
+     *
      * @return the predicate
      */
     public Predicate<Reference> owner(Predicate<Object> rule) {
@@ -322,6 +372,7 @@ public class Suite
      * Predicate testing if {@link Reference} owner class conforms to rules.
      *
      * @param rules the rules
+     *
      * @return the predicate
      */
     public Predicate<Reference> ownerType(Predicate<Class<?>>... rules) {
@@ -332,65 +383,81 @@ public class Suite
      * Predicate testing if {@link Reference} owner class conforms to rule.
      *
      * @param rule the rule
+     *
      * @return the predicate
      */
     public Predicate<Reference> ownerType(Predicate<Class<?>> rule) {
-        return reference -> reference.getOwnerClass() != null && rule.test(
-                reference.getOwnerClass());
+        return reference -> reference.getOwnerClass() != null
+                && rule.test(reference.getOwnerClass());
     }
 
     /**
-     * Predicate testing if {@link Reference} has specified {@link ReferenceType}.
+     * Predicate testing if {@link Reference} has specified {@link
+     * ReferenceType}.
      *
      * @param first the first
+     *
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIs(ReferenceType first) {
-        return reference -> EnumSet.of(first)
+        return reference -> EnumSet
+                .of(first)
                 .contains(reference.getReferenceType());
     }
 
     /**
-     * Predicate testing if {@link Reference} has one of specified {@link ReferenceType}.
+     * Predicate testing if {@link Reference} has one of specified {@link
+     * ReferenceType}.
      *
      * @param first          the first
      * @param referenceTypes the reference types
+     *
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIs(ReferenceType first,
                                                 ReferenceType... referenceTypes) {
-        return reference -> EnumSet.of(first, referenceTypes)
-                .contains(reference.getReferenceType());
+        return reference -> EnumSet.of(
+                first,
+                referenceTypes
+        ).contains(reference.getReferenceType());
     }
 
     /**
-     * Predicate testing if {@link Reference} has not specified {@link ReferenceType}.
+     * Predicate testing if {@link Reference} has not specified {@link
+     * ReferenceType}.
      *
      * @param first the first
+     *
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIsNot(ReferenceType first) {
-        return reference -> !EnumSet.of(first)
+        return reference -> !EnumSet
+                .of(first)
                 .contains(reference.getReferenceType());
     }
 
     /**
-     * Predicate testing if {@link Reference} has not one of specified {@link ReferenceType}.
+     * Predicate testing if {@link Reference} has not one of specified {@link
+     * ReferenceType}.
      *
      * @param first          the first
      * @param referenceTypes the reference types
+     *
      * @return the predicate
      */
     public Predicate<Reference> referenceTypeIsNot(ReferenceType first,
                                                    ReferenceType... referenceTypes) {
-        return reference -> !EnumSet.of(first, referenceTypes)
-                .contains(reference.getReferenceType());
+        return reference -> !EnumSet.of(
+                first,
+                referenceTypes
+        ).contains(reference.getReferenceType());
     }
 
     /**
      * Register inspection suite in scanner.
      *
      * @param scanner the scanner
+     *
      * @return the list
      */
     @SuppressWarnings("unchecked")
@@ -408,27 +475,28 @@ public class Suite
             if (method.getAnnotation(Disabled.class) != null) {
                 continue;
             }
-            Optional<Annotation> report = Arrays.stream(method.getDeclaredAnnotations())
-                    .filter(annotation -> annotation.annotationType()
+            Optional<Annotation> report = Arrays
+                    .stream(method.getDeclaredAnnotations())
+                    .filter(annotation -> annotation
+                            .annotationType()
                             .getAnnotation(Report.class) != null)
                     .findFirst();
             report.ifPresent(annotation -> {
-                Report reportAnnotation = annotation.annotationType()
+                Report reportAnnotation = annotation
+                        .annotationType()
                         .getAnnotation(Report.class);
                 Scopes               scopes    = method.getAnnotation(Scopes.class);
                 Predicate<Reference> preFilter = null;
 
                 if (scopes != null && scopes.value().length > 0) {
-                    Optional<Predicate<Reference>> filter = Stream.of(scopes.value()).<Predicate<Reference>>map(
-                            scope -> (Reference reference) -> scope.equals(
-                                    reference.getScope())).reduce(Predicate::or);
+                    Optional<Predicate<Reference>> filter = Stream.of(scopes.value()).<Predicate<Reference>>map(scope -> (Reference reference) -> scope
+                            .equals(reference.getScope())).reduce(Predicate::or);
                     preFilter = filter.get();
                 }
 
                 if (scopes != null && scopes.exclude().length > 0) {
-                    Optional<Predicate<Reference>> filter = Stream.of(scopes.exclude()).<Predicate<Reference>>map(
-                            scope -> (Reference reference) -> !scope.equals(
-                                    reference.getScope())).reduce(Predicate::and);
+                    Optional<Predicate<Reference>> filter = Stream.of(scopes.exclude()).<Predicate<Reference>>map(scope -> (Reference reference) -> !scope
+                            .equals(reference.getScope())).reduce(Predicate::and);
                     if (preFilter == null) {
                         preFilter = filter.get();
                     } else {
@@ -442,20 +510,21 @@ public class Suite
                     if (preFilter != null) {
                         predicate = preFilter.and(predicate);
                     }
-                    String message = (String) annotation.annotationType()
+                    String message = (String) annotation
+                            .annotationType()
                             .getMethod("value")
                             .invoke(annotation);
-                    inspections.add(new Inspection(reportAnnotation.level(),
-                                                   predicate,
-                                                   reportAnnotation.name(),
-                                                   message,
-                                                   getClass().getSimpleName()
-                                                           + "."
-                                                           + method.getName()
+                    inspections.add(new Inspection(
+                            reportAnnotation.level(),
+                            predicate,
+                            reportAnnotation.name(),
+                            message,
+                            getClass().getSimpleName() + "." + method.getName()
                     ));
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new IllegalStateException("Cannot import test suite method",
-                                                    e
+                    throw new IllegalStateException(
+                            "Cannot import test suite method",
+                            e
                     );
                 }
             });
@@ -467,6 +536,7 @@ public class Suite
      * Predicate testing if {@link Reference} target object conforms to rules.
      *
      * @param rules the rules
+     *
      * @return the predicate
      */
     public Predicate<Reference> target(Predicate<Object>... rules) {
@@ -477,6 +547,7 @@ public class Suite
      * Predicate testing if {@link Reference} target object conforms to rule.
      *
      * @param rule the rule
+     *
      * @return the predicate
      */
     public Predicate<Reference> target(Predicate<Object> rule) {
@@ -484,27 +555,31 @@ public class Suite
     }
 
     /**
-     * Predicate testing if any of {@link Reference} target object backreferences conform to rule.
+     * Predicate testing if any of {@link Reference} target object
+     * backreferences conform to rule.
      *
      * @param referencePredicate the reference predicate
+     *
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference> referencePredicate) {
-        return reference -> reference.getTarget() != null
-                && scanner.getBackreferences(reference.getTarget())
+        return reference -> reference.getTarget() != null && scanner
+                .getBackreferences(reference.getTarget())
                 .stream()
                 .anyMatch(referencePredicate);
     }
 
     /**
-     * Predicate testing if any of {@link Reference} target object backreferences conform to rules.
+     * Predicate testing if any of {@link Reference} target object
+     * backreferences conform to rules.
      *
      * @param referencePredicates the reference predicates
+     *
      * @return the predicate
      */
     public Predicate<Reference> targetBackreference(Predicate<Reference>... referencePredicates) {
-        return reference -> reference.getTarget() != null
-                && scanner.getBackreferences(reference.getTarget())
+        return reference -> reference.getTarget() != null && scanner
+                .getBackreferences(reference.getTarget())
                 .stream()
                 .anyMatch(and(referencePredicates));
     }
@@ -513,6 +588,7 @@ public class Suite
      * Predicate testing if {@link Reference} target class conforms to rules.
      *
      * @param rules the rules
+     *
      * @return the predicate
      */
     public Predicate<Reference> targetType(Predicate<Class<?>>... rules) {
@@ -523,11 +599,12 @@ public class Suite
      * Predicate testing if {@link Reference} target class conforms to rule.
      *
      * @param rule the rule
+     *
      * @return the predicate
      */
     public Predicate<Reference> targetType(Predicate<Class<?>> rule) {
-        return reference -> reference.getTargetClass() != null && rule.test(
-                reference.getTargetClass());
+        return reference -> reference.getTargetClass() != null
+                && rule.test(reference.getTargetClass());
     }
 
     /**

@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2020 Artem Godin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.vaadin.qa.cqt.data;
 
 import org.vaadin.qa.cqt.annotations.Level;
@@ -14,10 +37,12 @@ import static org.vaadin.qa.cqt.utils.HtmlFormatter.value;
  */
 public class InspectionResult {
 
-    private static final HtmlFormatter CATEGORY_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter CATEGORY_FORMAT = value()
+            .escapeHtml()
             .styled("category");
 
-    private static final HtmlFormatter MESSAGE_FORMAT = value().escapeHtml()
+    private static final HtmlFormatter MESSAGE_FORMAT = value()
+            .escapeHtml()
             .styled("message");
 
     private final Inspection inspection;
@@ -65,12 +90,14 @@ public class InspectionResult {
 
         Map<String, List<Reference>> referenceGroup = new HashMap<>();
         for (Reference reference : references) {
-            referenceGroup.computeIfAbsent(reference.getId(),
-                                           str -> new ArrayList<>()
+            referenceGroup.computeIfAbsent(
+                    reference.getId(),
+                    str -> new ArrayList<>()
             ).add(reference);
         }
 
-        List<String> groups = referenceGroup.keySet()
+        List<String> groups = referenceGroup
+                .keySet()
                 .stream()
                 .sorted()
                 .collect(Collectors.toList());
@@ -92,41 +119,52 @@ public class InspectionResult {
                     + descriptor
                     + "\").then(() => self.location.reload());'>Suppress</a></span>\n";
 
-            output.append("<!-- Class: ")
+            output
+                    .append("<!-- Class: ")
                     .append(encodeValue(first.getOwnerClass().getName()))
                     .append(" --><!-- Descriptor: ")
                     .append(descriptor)
                     .append(" -->");
-            output.append(value().styled("report " + inspection.getLevel()
-                    .name()
-                    .toLowerCase(Locale.ENGLISH)).format(reportTitle));
+            output.append(value()
+                                  .styled("report " + inspection
+                                          .getLevel()
+                                          .name()
+                                          .toLowerCase(Locale.ENGLISH))
+                                  .format(reportTitle));
             String contextPath = first.formatPathToScopeRoot();
             output.append(String.format(
                     "\t\tClass:         <a href='/%s/'>%s</a>\n",
                     encodeValue(first.getOwnerClass().getName()),
                     first.formatOwnerClass()
             ));
-            output.append(String.format("\t\tContext:       %s\n",
-                                        first.formatScope()
+            output.append(String.format(
+                    "\t\tContext:       %s\n",
+                    first.formatScope()
             ));
             if (!contextPath.isEmpty()) {
-                output.append(String.format("\t\tContext path:  %s\n",
-                                            contextPath
+                output.append(String.format(
+                        "\t\tContext path:  %s\n",
+                        contextPath
                 ));
             }
-            output.append(String.format("\t\tField:         %s\n",
-                                        first.formatField()
+            output.append(String.format(
+                    "\t\tField:         %s\n",
+                    first.formatField()
             ));
-            output.append(String.format("\t\tValue:         %s\n",
-                                        first.formatValue()
+            output.append(String.format(
+                    "\t\tValue:         %s\n",
+                    first.formatValue()
             ));
             if (referencesInGroup.size() > 1) {
-                output.append(String.format("\t\t               ... %d other\n",
-                                            referencesInGroup.size() - 1
+                output.append(String.format(
+                        "\t\t               ... %d other\n",
+                        referencesInGroup.size() - 1
                 ));
             }
-            List<String> backrefs = referencesInGroup.stream()
-                    .flatMap(reference -> reference.formatBackreferences()
+            List<String> backrefs = referencesInGroup
+                    .stream()
+                    .flatMap(reference -> reference
+                            .formatBackreferences()
                             .stream())
                     .sorted()
                     .distinct()
@@ -135,12 +173,14 @@ public class InspectionResult {
             int counter = 0;
             for (String backref : backrefs) {
                 if (counter == 0) {
-                    output.append(String.format("\t\tReferenced by: %s\n",
-                                                backref
+                    output.append(String.format(
+                            "\t\tReferenced by: %s\n",
+                            backref
                     ));
                 } else {
-                    output.append(String.format("\t\t               %s\n",
-                                                backref
+                    output.append(String.format(
+                            "\t\t               %s\n",
+                            backref
                     ));
                 }
                 counter++;
